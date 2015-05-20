@@ -1,0 +1,32 @@
+{
+	"chest": {
+		"url": "img/chest.png",
+		"frameWidth": 64,
+		"frameHeight": 64,
+		"layout": "horizontal",
+		"frameSets": [
+			"downLeft",
+			"downRight",
+			"topRight",
+			"topLeft"
+		],
+		"loop": false
+	},
+	"player": {
+		"url": "img/walk-cycle.png",
+		"frameWidth": 48,
+		"frameHeight": 92,
+		"layout": "horizontal",
+		"frameSets": [
+			"moveDown",
+			"moveDownLeft",
+			"moveLeft",
+			"moveUpLeft",
+			"moveUp",
+			"moveUpRight",
+			"moveRight",
+			"moveDownRight"
+		],
+		"loop": true
+	}
+}

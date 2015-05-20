@@ -1,0 +1,64 @@
+[
+	{
+		"name": "chest",
+		"x": 100,
+		"y": 100,
+		"isAnimated": true,
+		"view": "downRight"
+	},
+	{
+		"name": "chest",
+		"x": 300,
+		"y": 300,
+		"isAnimated": true,
+		"view": "topLeft"
+	},
+	{
+		"name": "chest",
+		"x": 300,
+		"y": 100,
+		"isAnimated": true,
+		"view": "downLeft"
+	},
+	{
+		"name": "chest",
+		"x": 100,
+		"y": 300,
+		"isAnimated": true,
+		"view": "topRight"
+	},
+	{
+		"name": "house",
+		"x": 40,
+		"y": 400,
+		"url": "img/house-1.png"
+	},
+	{
+		"name": "house2",
+		"x": 400,
+		"y": 600,
+		"url": "img/house-2.png"
+	},
+	{
+		"name": "arch",
+		"x": 340,
+		"y": 300,
+		"url": "img/arch-left.png"
+	},{
+		"name": "arch",
+		"x": 450,
+		"y": 294,
+		"url": "img/arch-right.png"
+	},
+	{
+		"name": "arch",
+		"x": 790,
+		"y": 600,
+		"url": "img/arch-left.png"
+	},{
+		"name": "arch",
+		"x": 900,
+		"y": 594,
+		"url": "img/arch-right.png"
+	}
+]
