@@ -1,0 +1,26 @@
+[
+	{
+		"name": "chest",
+		"x": 100,
+		"y": 100,
+		"view": "downRight"
+	},
+	{
+		"name": "chest",
+		"x": 300,
+		"y": 300,
+		"view": "topLeft"
+	},
+	{
+		"name": "chest",
+		"x": 300,
+		"y": 100,
+		"view": "downLeft"
+	},
+	{
+		"name": "chest",
+		"x": 100,
+		"y": 300,
+		"view": "topRight"
+	}
+]

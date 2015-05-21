@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="staggered" renderorder="right-down" width="50" height="50" tilewidth="125" tileheight="65" staggeraxis="y" staggerindex="odd" nextobjectid="7">
  <tileset firstgid="1" name="terrain" tilewidth="128" tileheight="68">
-  <image source="../../../../../../GRAPHICS/GameDev/Izometric/terrain.png" width="384" height="204"/>
+  <image source="../img/terrain.png" width="384" height="204"/>
  </tileset>
  <layer name="Bg" width="50" height="50">
   <data encoding="base64" compression="zlib">

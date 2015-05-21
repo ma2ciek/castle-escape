@@ -94,21 +94,52 @@ function extend(dest) {
 }
 
 
-function loadJSON (url, onSuccess, onFail) {
-	var request = new XMLHttpRequest();
-	request.open('GET', url, true);
-    request.send(null);
-	request.onload = function() {
-		if(this.status >= 200 && this.status < 400) {
-			// Success
-			var data = JSON.parse(this.response);
-			onSuccess && onSuccess(data);
-		} else {
-			onFail && onFail.call(this);
+function loadJSON() {
+	var fail = [], 
+		args = [].slice.call(arguments),
+		success = new Array(args.length),
+		onSuccess = null,
+		onFail = null,
+		counter = args.length;
+    
+	function count() {
+		if (--counter === 0) {
+			if (fail.length === 0) {
+				onSuccess && onSuccess.apply(this, success);
+			}
+			else onFail && onFail.apply(this, fail);
 		}
 	}
-	request.onerror = function() {
-		onFail && onFail.call(this);
+
+	for (var i = 0; i < args.length; i++) {
+		var request = new XMLHttpRequest();
+		request.open('GET', args[i], true);
+		request.send(null);
+		request.onload = function (connection) {
+			if (connection.target.status === 200) {
+				// Success
+				var data = JSON.parse(connection.target.responseText);
+				success[this] = data;
+				count();
+			} else {
+				fail.push(args[this]);
+				count();
+			}
+		}.bind(i); // Do zmiany!
+		request.onerror = function (connection) {
+			fail.push(args[this]);
+			count();
+		}.bind(i); // Do zmiany!
+	}
+	return {
+		then: function (callback) {
+			onSuccess = callback;
+			return this;
+		},
+		fail: function (callback) {
+			onFail = callback;
+			return this;
+		}
 	}
 }
 

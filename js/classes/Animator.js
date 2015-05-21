@@ -10,7 +10,7 @@ function Animator(o) {
 	this._currentFrame = 0;
 	this._currentAnimation = o.view ? this._sprite.frameSets.indexOf(o.view) : 0;
 	this._timeStamp = (typeof game === 'object') ? game.frame : 0;
-	this._end = false;
+	this.end = false;
 }
 
 Animator.prototype.getAudio = function () {
@@ -28,7 +28,7 @@ Animator.prototype.getOffsetTop = function () {
 };
 
 Animator.prototype.animate = function (type) {
-	type = type || this._sprite.frameSets[this._currentAnimation];
+	if(type === 'default' || typeof type === 'undefined') type = this._sprite.frameSets[this._currentAnimation];
 	if (game.frame - this._timeStamp >= this._duration || this._sprite.frameSets.indexOf(type) !== this._currentAnimation) {
 		this._timeStamp = game.frame;
 		this.nextFrame(this._sprite.frameSets.indexOf(type));

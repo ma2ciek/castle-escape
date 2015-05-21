@@ -1,15 +1,17 @@
 {
 	"bgMusic": {
-		"src": [
-			"audio/pirates.mp3"
-		],
+		"src": ["audio/pirates.mp3"],
 		"autoPlay": true,
 		"volume": 10,
 		"loop": true
 	},
 	"road": {
-		"src": ["audio/forest-road2.mp3"],
-		"autoPlay": false,
+		"src": ["audio/forest-road.wav"],
+		"volume": 50,
+		"loop": false
+	},
+	"chest-opening": {
+		"src": ["audio/chest-opening.wav"],
 		"volume": 50,
 		"loop": false
 	}

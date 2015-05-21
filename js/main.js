@@ -19,9 +19,8 @@ function Game() {
 	this.frame = 0;
 	this._level = 0;
 	audioManager = this._audioManager = new AudioManager();
-	this._loadAudio();
 	this._board = new Board();
-	this._world = new World();
+	this._world = new World(this);
 	var self = this;
 	this._world.onload = function() {
 		self._player = new Player(this);	
@@ -42,12 +41,6 @@ Game.prototype.nextFrame = function () {
 	fps.count(ctx);
 	window.requestAnimationFrame(this.nextFrame.bind(this));
 };
-
-Game.prototype._loadAudio = function () {
-	loadJSON('data/audio.json', function(data) {
-		this._audioManager.add(data);
-	}.bind(this));
-}
 
 function Board() {
 	this.width = window.innerWidth;

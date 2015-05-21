@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="staggered" renderorder="right-down" width="60" height="80" tilewidth="125" tileheight="65" staggeraxis="y" staggerindex="odd" nextobjectid="7">
+ <properties>
+  <property name="name" value="001"/>
+ </properties>
+ <tileset firstgid="1" name="terrain" tilewidth="128" tileheight="68">
+  <image source="../img/terrain.png" width="384" height="204"/>
+  <terraintypes>
+   <terrain name="Grass" tile="-1"/>
+   <terrain name="Brick" tile="-1"/>
+  </terraintypes>
+  <tile id="0" terrain="0,0,0,0"/>
+  <tile id="1" terrain="0,0,0,0"/>
+  <tile id="2" terrain="1,0,1,0"/>
+  <tile id="3" terrain="1,1,1,1"/>
+  <tile id="4" terrain="0,0,1,1"/>
+  <tile id="5" terrain="1,0,0,1"/>
+  <tile id="6" terrain="0,1,1,0"/>
+  <tile id="7" terrain="1,1,0,0"/>
+  <tile id="8" terrain="0,1,0,1"/>
+ </tileset>
+ <layer name="Bg" width="60" height="80">
+  <data encoding="base64" compression="zlib">
+   eJztwTEBAAAAwqD1T20LL6AAAAAAAAAAAAAAAAAAAAAAAADgZ0sAAAE=
+  </data>
+ </layer>
+</map>

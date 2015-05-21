@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="staggered" renderorder="right-down" width="50" height="50" tilewidth="125" tileheight="65" staggeraxis="y" staggerindex="odd" nextobjectid="38">
+ <tileset firstgid="1" name="terrain" tilewidth="128" tileheight="68">
+  <image source="../img/terrain.png" width="384" height="204"/>
+  <terraintypes>
+   <terrain name="Grass" tile="0"/>
+   <terrain name="Brick" tile="3"/>
+  </terraintypes>
+  <tile id="0" terrain="0,0,0,0"/>
+  <tile id="1" terrain="0,0,0,0"/>
+  <tile id="2" terrain="1,0,1,0"/>
+  <tile id="3" terrain="1,1,1,1"/>
+  <tile id="4" terrain="0,0,1,1"/>
+  <tile id="5" terrain="1,0,0,1"/>
+  <tile id="6" terrain="1,1,1,0"/>
+  <tile id="7" terrain="1,1,0,0"/>
+  <tile id="8" terrain="0,1,0,1"/>
+ </tileset>
+ <tileset firstgid="10" name="hehe" tilewidth="151" tileheight="183">
+  <tile id="0">
+   <image width="151" height="183" source="../img/arch-left.png"/>
+  </tile>
+  <tile id="1">
+   <image width="151" height="183" source="../img/arch-left2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="142" height="130" source="../img/arch-right.png"/>
+  </tile>
+  <tile id="3">
+   <image width="142" height="130" source="../img/arch-right2.png"/>
+  </tile>
+  <tile id="4">
+   <image width="129" height="106" source="../img/house-1.png"/>
+  </tile>
+  <tile id="5">
+   <image width="129" height="159" source="../img/house-2.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="16" name="collision_68" tilewidth="125" tileheight="65">
+  <properties>
+   <property name="hidden" value="true"/>
+  </properties>
+  <image source="../img/collision_68.png" width="128" height="68"/>
+ </tileset>
+ <layer name="Ground" width="50" height="50">
+  <properties>
+   <property name="isVisible" value="true"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJztmNEOgyAMRdFNmf//w5vJSAwpeoXWFu3DeTGIvVToLWMIYXQcx3GcBzOA4yYDsR6xAGPij9lArHscxRfBcRbYizGC4yxQii8S49A9pallG+NE6Fj5GIh1j1eWB+vxllj++RgKeeiF9F/1rGGrpXcday7eBuLggLtua/iZlrpN1RQtL9NStwdi7TX8DFW3z74/F+bT1HH2+/nat64Ll4Yz387XvnVNuHWg38/fL/kZSS1HNQ/tTRAkdSC9INqbaGpB5kV7E+2c1Gqp9WEWcpJqXYuXtJCTGHg88VU5ofxd8sIcfWLNeV4zN+XxuPsSzjOdmpfydxK9Fed5Ts1Nebz1mcR9D+eZviX/95MuqTsrzvMc0SZ59ya9D69Ceh9qaLmDjt41JHq9h3Ucx3kaXwrTFbg=
+  </data>
+ </layer>
+ <objectgroup name="Objects">
+  <properties>
+   <property name="isVisible" value="true"/>
+  </properties>
+  <object id="9" gid="10" x="680" y="735" width="151" height="183"/>
+  <object id="10" gid="10" x="309" y="477" width="151" height="183"/>
+  <object id="12" gid="10" x="862" y="834" width="151" height="183"/>
+  <object id="13" gid="10" x="187.667" y="411.333" width="151" height="183"/>
+  <object id="14" gid="10" x="493" y="640" width="151" height="183"/>
+  <object id="15" gid="11" x="911" y="605" width="151" height="183"/>
+  <object id="17" gid="12" x="301.333" y="351.333" width="142" height="130"/>
+  <object id="18" gid="12" x="607" y="579" width="142" height="130"/>
+  <object id="19" gid="12" x="790" y="672" width="142" height="130"/>
+  <object id="20" gid="12" x="970" y="777" width="142" height="130"/>
+  <object id="23" gid="13" x="809" y="544" width="142" height="130"/>
+  <object id="24" gid="13" x="429" y="735" width="142" height="130"/>
+  <object id="25" gid="11" x="532" y="794" width="151" height="183"/>
+  <object id="26" gid="15" x="314" y="803" width="129" height="159"/>
+  <object id="27" gid="15" x="190" y="870" width="129" height="159"/>
+  <object id="28" gid="15" x="310" y="994" width="129" height="159"/>
+  <object id="29" gid="14" x="301" y="1121" width="129" height="106"/>
+  <object id="30" gid="14" x="188" y="1060" width="129" height="106"/>
+  <object id="31" gid="14" x="93" y="1006" width="129" height="106"/>
+  <object id="36" gid="12" x="421" y="418.333" width="142" height="130"/>
+ </objectgroup>
+ <layer name="Collision" width="50" height="50">
+  <data encoding="base64" compression="zlib">
+   eJzt1DsKwDAMBFEfwfc/bVAhMMKfKqBd5jWBqNFgJ2MAAID5mN3m3Zx2VemY5Vlnt3k3p10dOtQaUt25NqlY91dtWNX7pNaxu1dqDcnhPgXF/9OOw3nc/rtKdt+3WovjWdR3KtTPIDl0ODQEOvpxaXHpCA4NwaUDAAAAAP72AcmzBIE=
+  </data>
+ </layer>
+</map>

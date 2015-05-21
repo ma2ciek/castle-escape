@@ -1,7 +1,10 @@
+/* global Animator */
+/* global user */
 /* global extend */
 /* global Vector */
 function Player(world) {
 	var self = this;
+	this._world = world;
 	this.x = 200;
 	this.y = 200;
 	this.width = 48;
@@ -43,17 +46,17 @@ Player.prototype.move = function () {
 	if (user.keys[39] || user.keys[68]) dirX++;
 
 	if (dirX !== 0 || dirY !== 0) {
-		var v = new Vector(dirX, dirY * game._world.tileFactor);
+		var v = new Vector(dirX, dirY * this._world.tileFactor);
 		this.x += this.speed * v.unit.x;
 		this.y += this.speed * v.unit.y;
 	}
 	
 	// Collisions
-	for (var i = 0; i < game._world._objectsOnScreen.length; i++) {
-		var o = game._world._objectsOnScreen[i];
+	for (var i = 0; i < this._world._objectsOnScreen.length; i++) {
+		var o = this._world._objectsOnScreen[i];
 		if (o instanceof this.constructor) continue;
 		if (RectCollision(this.shadowRelativePosition, o)) {
-			o.animator && o.animator.animate();
+			o.actions && o.actions.playeron && o.animate(o.actions.playeron);
 		}
 	}
 	
