@@ -113,6 +113,7 @@ function loadJSON() {
 		var request = new XMLHttpRequest();
 		request.open('GET', args[i], true);
 		request.send(null);
+        request.setRequestHeader("Content-Type", "application/json");
 		request.onload = function (connection) {
 			if (connection.target.status === 200) {
 				// Success
