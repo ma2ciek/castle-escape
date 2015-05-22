@@ -113,11 +113,11 @@ function loadJSON() {
 		var request = new XMLHttpRequest();
 		request.open('GET', args[i], true);
 		request.send(null);
-        request.setRequestHeader("Content-Type", "application/json");
+        request.responseType = 'json';
 		request.onload = function (connection) {
 			if (connection.target.status === 200) {
 				// Success
-				var data = JSON.parse(connection.target.responseText);
+				var data = connection.target.response;
 				success[this] = data;
 				count();
 			} else {
