@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="staggered" renderorder="right-down" width="50" height="50" tilewidth="125" tileheight="65" staggeraxis="y" staggerindex="odd" nextobjectid="38">
+<map version="1.0" orientation="staggered" renderorder="right-down" width="50" height="50" tilewidth="125" tileheight="65" staggeraxis="y" staggerindex="odd" nextobjectid="53">
  <tileset firstgid="1" name="terrain" tilewidth="128" tileheight="68">
   <image source="../img/terrain.png" width="384" height="204"/>
   <terraintypes>
@@ -16,7 +16,10 @@
   <tile id="7" terrain="1,1,0,0"/>
   <tile id="8" terrain="0,1,0,1"/>
  </tileset>
- <tileset firstgid="10" name="hehe" tilewidth="151" tileheight="183">
+ <tileset firstgid="10" name="buildings" tilewidth="151" tileheight="183">
+  <properties>
+   <property name="images" value="true"/>
+  </properties>
   <tile id="0">
    <image width="151" height="183" source="../img/arch-left.png"/>
   </tile>
@@ -36,18 +39,22 @@
    <image width="129" height="159" source="../img/house-2.png"/>
   </tile>
  </tileset>
- <tileset firstgid="16" name="collision_68" tilewidth="125" tileheight="65">
+ <tileset firstgid="16" name="chest" tilewidth="64" tileheight="64">
+  <image source="../img/chest.png" width="256" height="256"/>
+ </tileset>
+ <tileset firstgid="32" name="collision_68" tilewidth="125" tileheight="65">
   <properties>
    <property name="hidden" value="true"/>
   </properties>
   <image source="../img/collision_68.png" width="128" height="68"/>
  </tileset>
+ <tileset firstgid="33" source="H:/Game dev/graphics/Isometric/TILESETS/my_tiles.tsx"/>
  <layer name="Ground" width="50" height="50">
   <properties>
    <property name="isVisible" value="true"/>
   </properties>
   <data encoding="base64" compression="zlib">
-   eJztmNEOgyAMRdFNmf//w5vJSAwpeoXWFu3DeTGIvVToLWMIYXQcx3GcBzOA4yYDsR6xAGPij9lArHscxRfBcRbYizGC4yxQii8S49A9pallG+NE6Fj5GIh1j1eWB+vxllj++RgKeeiF9F/1rGGrpXcday7eBuLggLtua/iZlrpN1RQtL9NStwdi7TX8DFW3z74/F+bT1HH2+/nat64Ll4Yz387XvnVNuHWg38/fL/kZSS1HNQ/tTRAkdSC9INqbaGpB5kV7E+2c1Gqp9WEWcpJqXYuXtJCTGHg88VU5ofxd8sIcfWLNeV4zN+XxuPsSzjOdmpfydxK9Fed5Ts1Nebz1mcR9D+eZviX/95MuqTsrzvMc0SZ59ya9D69Ceh9qaLmDjt41JHq9h3Ucx3kaXwrTFbg=
+   eJztmFESgyAMRLGtUq/R+x+ydabMWCboCokJNh/vx0HMEiEbbiGEm2Oal4EYXMevjitouYqOpEU7BqdvBnDcaCDWPWZgTPwwGYh1i734IjjOAlsxRnCcBUrxRWIcuqc0taxjHAkdC08DsW5xz/JgPd4S8zcfQyEPvZD+q541rLX0rmPJxcNAHBxw120NP9NSt6maouVlWur2QKy9hp+h6vbR96fCfJo6jn4/X/vWdeHScOTb+dq3rgm3DvT7+fslPyOpZa/mob0JgqQOpBdEexNNLci8aG+inZNaLbU+zEJOUq1r8ZIWchIDjyc+KyeUv0temKNPrDnPa+amPB53X8J5plPzUv5OorfiPM+puSmPtzyTuO/hPNPX5P9+0iV1Z8V5niPaJO/epPfhWUjvQw0tV9DRu4ZEr/ewjuM4/8YbUqQWmA==
   </data>
  </layer>
  <objectgroup name="Objects">
@@ -77,7 +84,7 @@
  </objectgroup>
  <layer name="Collision" width="50" height="50">
   <data encoding="base64" compression="zlib">
-   eJzt1DsKwDAMBFEfwfc/bVAhMMKfKqBd5jWBqNFgJ2MAAID5mN3m3Zx2VemY5Vlnt3k3p10dOtQaUt25NqlY91dtWNX7pNaxu1dqDcnhPgXF/9OOw3nc/rtKdt+3WovjWdR3KtTPIDl0ODQEOvpxaXHpCA4NwaUDAAAAAP72AcmzBIE=
+   eJztzzEKwDAMBEE/Zf//ylQBc0hOE7AObpoVUgpnrYiIiODjdrpPw2Hf3SZBqrfTfRqk+767TYT0nav9dDTVeTq2UuzdsPp/ckBRiu8c0MxukLqimZ3Q1A1bkZ0LmrpBqrMDpK6QOkLqCqkrpM6QukLqjNsP+Am3HxAREREREWHiAWxlCQE=
   </data>
  </layer>
 </map>
