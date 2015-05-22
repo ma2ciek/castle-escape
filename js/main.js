@@ -11,6 +11,14 @@ var canvas,
 	game;
 
 function init() {
+	canvas = document.getElementsByTagName('CANVAS')[0];
+	ctx = canvas.getContext('2d');
+	
+	addAdditionalfunctionsToCtx(ctx);
+	
+	settings.init(ctx);
+	
+	
 	user = new User();
 	game = new Game();
 }
@@ -38,33 +46,25 @@ Game.prototype.nextFrame = function () {
 	this._world.drawLayers();	
 	this._world.drawObjects();
 
+	settings.areVisible && this._board.drawSettings();
+	
 	fps.count(ctx);
 	window.requestAnimationFrame(this.nextFrame.bind(this));
 };
 
-function Board() {
-	this.width = window.innerWidth;
-	this.height = window.innerHeight;
 
-	this.init();
-	this.resize();
+
+
+
+function EventHandler() {
+	this._events = [];
 }
 
-Board.prototype.resize = function () {
-	var self = this;
-	function resize() {
-		self.width = canvas.width = document.documentElement.clientWidth || document.body.clientWidth;
-		self.height = canvas.height = document.documentElement.clientHeight || document.body.clientHeight;
-	}
-	window.addEventListener('resize', resize);
-	resize();
-};
 
-Board.prototype.init = function () {
-	canvas = document.getElementsByTagName('CANVAS')[0];
-	ctx = canvas.getContext('2d');
+function GameEvent() {
+	
 }
 
-Board.prototype.draw = function () {
-	ctx.clearRect(0, 0, this.width, this.height);
+GameEvent.prototype.trigger = function() {
+	
 }

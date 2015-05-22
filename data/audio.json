@@ -7,7 +7,7 @@
 	},
 	"road": {
 		"src": ["audio/forest-road.wav"],
-		"volume": 50,
+		"volume": 30,
 		"loop": false
 	},
 	"chest-opening": {

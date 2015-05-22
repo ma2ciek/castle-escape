@@ -1,5 +1,3 @@
-/* global Sprite */
-/* global loadJSON */
 function World(game) {
 	this._game = game;
 	this._layers = [];
@@ -102,8 +100,6 @@ World.prototype.drawObjects = function () {
 	this._objectsOnScreen = [];
 	this._objects.sort(function (o1, o2) {
 		if ((o1.y + o1.height) - (o2.y + o2.height) === 0 ) {
-			console.log(o1.x - o2.x)
-			if(o1.x === o2.x) debugger;
 			return o1.x - o2.x
 		}
 		else return (o1.y + o1.height) - (o2.y + o2.height) ;
@@ -161,8 +157,6 @@ function GameObject(_world, properties) {
 	if (properties.name && properties.name in _world._objectTypes) {
 		extend(this, _world._objectTypes[properties.name]);
 	}
-	
-	console.log(this);
 	
 	extend(this, properties);
 
