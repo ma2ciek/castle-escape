@@ -1,7 +1,3 @@
-/* global Animator */
-/* global user */
-/* global extend */
-/* global Vector */
 function Player(world) {
 	var self = this;
 	this._world = world;
@@ -10,7 +6,6 @@ function Player(world) {
 	this.width = 48;
 	this.height = 92;
 	this.speed = 3;
-	this.isAnimated = true;
 	this.shadowRelativePosition = {
 		get x() { return self.x + 15 },
 		get y() { return self.y + 72 },
@@ -19,13 +14,14 @@ function Player(world) {
 	};
 	
 	this.sprite = world._sprites['player'];
-	this.animator = new Animator({
-		sprite: this.sprite,
-		duration: 5,
-		view: 'moveRight',
-		audio: 'road',
-		once: false
-	});
+	
+	this.view = 'moveRight';
+	this.audio = 'road';
+	this._frameDuration = 5;
+
+
+	extend(this, new Animator);
+	extend(this, new EventEmitter);
 	
 	// Get prototype functions of GameObject
 	extend(this, GameObject.prototype);
@@ -56,18 +52,18 @@ Player.prototype.move = function () {
 		var o = this._world._objectsOnScreen[i];
 		if (o instanceof this.constructor) continue;
 		if (RectCollision(this.shadowRelativePosition, o)) {
-			o.actions && o.actions.playeron && o.animate(o.actions.playeron);
+			o.actions && o.actions.playeron && o.action(o.actions.playeron);
 		}
 	}
 	
 	
 	// Animation	
-	if (dirX === 1 && dirY === 0) this.animator.animate('moveRight')
-	else if (dirX === 1 && dirY === -1) this.animator.animate('moveUpRight')
-	else if (dirX === 1 && dirY === 1) this.animator.animate('moveDownRight')
-	else if (dirX === 0 && dirY === 1) this.animator.animate('moveDown')
-	else if (dirX === 0 && dirY === -1) this.animator.animate('moveUp')
-	else if (dirX === -1 && dirY === 0) this.animator.animate('moveLeft')
-	else if (dirX === -1 && dirY === -1) this.animator.animate('moveUpLeft')
-	else if (dirX === -1 && dirY === 1) this.animator.animate('moveDownLeft')
+	if (dirX === 1 && dirY === 0) this.animate('moveRight')
+	else if (dirX === 1 && dirY === -1) this.animate('moveUpRight')
+	else if (dirX === 1 && dirY === 1) this.animate('moveDownRight')
+	else if (dirX === 0 && dirY === 1) this.animate('moveDown')
+	else if (dirX === 0 && dirY === -1) this.animate('moveUp')
+	else if (dirX === -1 && dirY === 0) this.animate('moveLeft')
+	else if (dirX === -1 && dirY === -1) this.animate('moveUpLeft')
+	else if (dirX === -1 && dirY === 1) this.animate('moveDownLeft')
 };

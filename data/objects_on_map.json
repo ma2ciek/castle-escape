@@ -3,24 +3,46 @@
 		"name": "chest",
 		"x": 100,
 		"y": 100,
-		"view": "downRight"
+		"view": "downRight",
+		"content": "money"
 	},
 	{
 		"name": "chest",
 		"x": 300,
 		"y": 300,
-		"view": "topLeft"
+		"view": "topLeft",
+		"content": "empty"
 	},
 	{
 		"name": "chest",
 		"x": 300,
 		"y": 100,
-		"view": "downLeft"
+		"view": "downLeft",
+		"content": "empty"
 	},
 	{
 		"name": "chest",
 		"x": 100,
 		"y": 300,
-		"view": "topRight"
+		"view": "topRight",
+		"content": "empty"
+	},
+	{
+		"name": "knight",
+		"x": 300,
+		"y": 400,
+		"view": "right"
+	},
+	{
+		"name": "barracks",
+		"x": 500,
+		"y": 100,
+		"view": "bottom"
+	},
+	{
+		"name": "barracks",
+		"x": 640,
+		"y": 165,
+		"view": "top"
 	}
 ]

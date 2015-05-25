@@ -146,13 +146,6 @@ Math.sign = Math.sign || function (x) {
     return x === 0 ? 0 : x / Math.abs(x);
 }
 
-function relativate(x, y) {
-	return {
-		x: x - game._player.x - game._player.width / 2 + game._board.width / 2,
-		y: y - game._player.y - game._player.width / 2 + game._board.height / 2
-	}
-} 
-
 function RectCollision(o1, o2) {
     if(o2.x < o1.x + o1.width && o2.y < o1.y + o1.height 
     && o2.x + o2.width > o1.x && o2.y + o2.height > o1.y) {

@@ -83,8 +83,9 @@ World.prototype.drawLayers = function () {
 			for (var y = startY; y < endY; y++) {
 				for (var x = endX - 1; x >= startX; x--) {
 
-					var screenX = x * this.outputTileWidth + game._board.width / 2 - game._player.x;
-					var screenY = y * this.outputTileHeight / 2 + game._board.height / 2 - game._player.y;
+					var relPosition = relativate(x * this.outputTileWidth, y * this.outputTileHeight / 2)
+					var screenX = relPosition.x -10;
+					var screenY = relPosition.y - 15;
 
 					if (y % 2 === 1) screenX += this.outputTileWidth / 2;
 
@@ -145,85 +146,6 @@ World.prototype.addObject = function (o) {
 	this._objects.push(o);
 };
 
-
-
-
-
-
-/***** GAME OBJECT CLASS *****/
-function GameObject(_world, properties) {
-	if (_world === undefined) return;
-
-	if (properties.name && properties.name in _world._objectTypes) {
-		extend(this, _world._objectTypes[properties.name]);
-	}
-	
-	extend(this, properties);
-
-	if (this.isAnimated) {
-		this.sprite = _world._sprites[this.name];
-		this.height = this.sprite.frameHeight;
-		this.width = this.sprite.frameWidth;
-		this.animator = new Animator({
-			sprite: this.sprite,
-			duration: 3,
-			view: this.view
-		});
-	} else extend(this, new StaticImage(this));
-
-}
-
-GameObject.prototype.draw = function () {
-	var translatedPos = relativate(this.x, this.y);
-
-	if (this.sprite) {
-		this.sprite.drawFrame(ctx, this.animator.getOffsetLeft(), this.animator.getOffsetTop(),
-			translatedPos.x, translatedPos.y);
-	}
-}
-GameObject.prototype.animate = function (actions) {
-
-	if (this.animator && this.animator.end) return;
-	if (actions.requiredKey && !(user.keys[actions.requiredKey])) return;
-
-	var automat = {
-		audio: function (audioName) {
-			audioManager.list[audioName].play();
-		},
-		animation: function () {
-			this.animator.animate(value)
-		},
-		once: function () {
-			this.inActive = true;
-		},
-		requiredKey: function () {
-
-		}
-	}
-
-
-
-	for (var actionType in actions) {
-		var value = actions[actionType];
-		automat[actionType].call(this, value);
-	}
-
-
-}
-
-function StaticImage(self) {
-	this.image = new Image();
-	this.image.onload = function () {
-		self.width = self.image.width;
-		self.height = self.image.height;
-	}.bind(this, self);
-	this.image.src = self.url;
-}
-
-StaticImage.prototype.draw = function () {
-	var translatedPos = relativate(this.x, this.y);
-	this.image.width > 0 && ctx.drawImage(this.image, translatedPos.x, translatedPos.y);
-};
 
 
 

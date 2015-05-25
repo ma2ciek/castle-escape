@@ -3,6 +3,7 @@
 		"url": "img/chest.png",
 		"frameWidth": 64,
 		"frameHeight": 64,
+		"frameDuration": 3,
 		"layout": "horizontal",
 		"frameSets": [
 			"downLeft",
@@ -16,7 +17,7 @@
 		"url": "img/walk-cycle.png",
 		"frameWidth": 48,
 		"frameHeight": 92,
-		"layout": "horizontal",
+		"frameDuration": 3,
 		"frameSets": [
 			"moveDown",
 			"moveDownLeft",
@@ -28,5 +29,43 @@
 			"moveDownRight"
 		],
 		"loop": true
+	}, 
+	"girl": {
+		"url": "img/spr_haylee_walk.png",
+		"frameWidth": 138,
+		"frameHeight": 192,
+		"frameDuration": 6,
+		"frameSets": [
+			"moveDown",
+			"moveDownLeft",
+			"moveLeft",
+			"moveUpLeft",
+			"moveUp",
+			"moveUpRight",
+			"moveRight",
+			"moveDownRight"
+		],
+		"loop": true
+	},
+	"knight": {
+		"url": "img/knight.png",
+		"frameWidth": 159,
+		"frameHeight": 148,
+		"frameDuration": 4,
+		"frameSets": [
+			"right"
+		],
+		"loop": true
+	},
+	"barracks": {
+		"url": "img/barracks_192.png",
+		"frameWidth": 192,
+		"frameHeight": 192,
+		"frameSets": [
+			"bottom",
+			"left",
+			"top",
+			"right"
+		]
 	}
 }

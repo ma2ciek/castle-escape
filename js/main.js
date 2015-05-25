@@ -18,13 +18,11 @@ function init() {
 	
 	settings.init(ctx);
 	
-	
 	user = new User();
 	game = new Game();
 }
 
 function Game() {
-	this.frame = 0;
 	this._level = 0;
 	audioManager = this._audioManager = new AudioManager();
 	this._board = new Board();
@@ -34,12 +32,14 @@ function Game() {
 		self._player = new Player(this);	
 		self.nextFrame();
 	};
-	
+	extend(this, new Timeline)
 }
 
 Game.prototype.nextFrame = function () {
-	this.frame++;
-
+	this._frame++;
+	
+	this.check();
+	
 	this._player.move();
 	
 	this._board.draw();
@@ -50,21 +50,35 @@ Game.prototype.nextFrame = function () {
 	
 	fps.count(ctx);
 	window.requestAnimationFrame(this.nextFrame.bind(this));
+	
 };
 
 
-
-
-
-function EventHandler() {
-	this._events = [];
+function Timeline() {
+	this._events = {};
+    this._frame = 0;
 }
-
-
-function GameEvent() {
-	
+Timeline.prototype.getCurrentFrameIndex = function() {
+	return this._frame;
 }
-
-GameEvent.prototype.trigger = function() {
-	
+Timeline.prototype.addEvent = function(_frame, eventCallback, self) {
+	_frame += this._frame;
+    if (!this._events[_frame]) this._events[_frame] = [];
+    this._events[_frame].push({
+        fire: eventCallback,
+        self: self
+    });
+};
+Timeline.prototype.showEvents = function() {
+	return this._events;
 }
+Timeline.prototype.check = function () {
+    var f = this._events[this._frame]; // frame events
+    if (f) {
+        for (var i = 0; i < f.length; i++) {
+            var event = f[i];
+            event.fire.call(event.self);
+        }
+        delete this._events[this._frame];
+    }
+};

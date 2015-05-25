@@ -11,7 +11,7 @@ AudioManager.prototype.add = function (audioList) {
 		var audio = audioList[name]; // audio 
 		for (var j = 0; j < audio.src.length; j++) {
 			var src = audio.src[j];
-			var HTMLAudio = new Audio(src);
+			var HTMLAudio = new Audio();
 			
 			// TODO: Without changing DOM model
 			HTMLAudio.localVolume = audio.volume ? audio.volume / 100 : 1;
@@ -19,17 +19,22 @@ AudioManager.prototype.add = function (audioList) {
 			HTMLAudio.muted = this._muted;
 
 			if (audio.loop && !audio.once) {
-				HTMLAudio.onended = function () {
+				HTMLAudio.addEventListener('ended', function () {
 					this.play();
-				};
-			}
-			HTMLAudio.oncanplaythrough = function (HTMLAudio, audio, name) {
+				});
+			};
+
+			HTMLAudio.addEventListener('canplaythrough', function (HTMLAudio, audio, name) {
 				this.list[name] = HTMLAudio;
-				if (audio.autoPlay) HTMLAudio.play();
-			}.bind(this, HTMLAudio, audio, name);
+				if (audio.autoPlay) 
+					HTMLAudio.play();
+			}.bind(this, HTMLAudio, audio, name));
+
 			HTMLAudio.onerror = function (audio) {
 				console.error('Cannot load this file: ' + audio.url);
-			}.bind(this, audio)
+			}.bind(this, audio);
+
+			HTMLAudio.src = src;
 		}
 	}
 };
