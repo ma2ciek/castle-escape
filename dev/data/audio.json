@@ -1,0 +1,18 @@
+{
+	"game-music": {
+		"src": "audio/pirates.mp3",
+		"autoPlay": true,
+		"volume": 10,
+		"loop": true
+	},
+	"chest-opening": {
+		"src": "audio/chest-opening.wav",
+		"volume": 50,
+		"loop": false
+	},
+	"start-music": {
+		"src": "audio/exploration.mp3",
+		"volume": 50,
+		"loop": true
+	}
+}
