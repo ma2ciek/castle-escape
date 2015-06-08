@@ -1,23 +1,16 @@
 function Scene(board, o) {
 	extend(this, new EventEmitter());
 	this._board = board;
-	this._isVivible = !!o.isVivible;
-	this._height = o.height || board.height;
-	this._width = o.width || board.width;
-	this._left = o.left || board.width - o.right || 0;
-	this._top = o.top || board.width - o.bottom || 0;
 
-	if (o.alignCenter)
-		this._left = (board.width - this._width) / 2;
-	if (o.alignVertical)
-		this._top = (board.height - this._height) / 2;
+	this._isVivible = !!o.isVivible;
+	this._zIndex = o.zIndex || 0;
+
+	this._setDimensions(board, o);
+	this._setOffset(board, o);
 
 	this._bgColor = o.bgColor || null;
-	if(o.bgImage) 
+	if (o.bgImage)
 		this._bgImage = board.imgManager[o.bgImage];
-
-	this._objects = [];
-	this._zIndex = o.zIndex || 0;
 
 	this._objects = {};
 	this._sortedObjects = [];
@@ -26,6 +19,21 @@ function Scene(board, o) {
 		this._objects[objName] = new SceneObject(this, objName, o.objects[objName]);
 	}
 	this._sortObjects();
+}
+
+Scene.prototype._setDimensions = function(board, o) {
+	this._height = o.height || board.height;
+	this._width = o.width || board.width;
+};
+
+Scene.prototype._setOffset = function(board, o) {
+	this._left = o.left || board.width - o.right || 0;
+	this._top = o.top || board.width - o.bottom || 0;
+
+	if (o.alignCenter)
+		this._left = (board.width - this._width) / 2;
+	if (o.alignVertical)
+		this._top = (board.height - this._height) / 2;
 }
 
 Scene.prototype.getBoard = function() {
@@ -44,7 +52,7 @@ Scene.prototype._sortObjects = function() {
 	}
 	this._sortedObjects.sort(function(o1, o2) {
 		return o1._zIndex - o2._zIndex;
-	});	
+	});
 };
 
 Scene.prototype.draw = function() {
@@ -54,7 +62,7 @@ Scene.prototype.draw = function() {
 	}
 	if (this._bgImage)
 		ctx.drawImage(this._bgImage, this._left, this._top, this._width, this._height);
-	for (var i=0; i<this._sortedObjects.length; i++) {
+	for (var i = 0; i < this._sortedObjects.length; i++) {
 		this._sortedObjects[i].draw();
 	}
 };
@@ -69,7 +77,7 @@ Scene.prototype.attr = function() {
 };
 
 Scene.prototype.remove = function() {
-	for(var objName in this._objects) {
+	for (var objName in this._objects) {
 		this._objects[objName].remove();
 	}
 };
@@ -87,11 +95,11 @@ function SceneObject(_scene, _objName, o) {
 	this._scene = _scene;
 	this._objName = _objName;
 	this._hoverStyles = {};
-	
+
 	function ext(class_name) {
-		if(class_name in styles) {
-			for(var prop in styles[class_name]) {
-				if(prop === 'extend')
+		if (class_name in styles) {
+			for (var prop in styles[class_name]) {
+				if (prop === 'extend')
 					ext(styles[class_name].extend);
 				else
 					o[prop] = styles[class_name][prop];
@@ -101,17 +109,17 @@ function SceneObject(_scene, _objName, o) {
 	ext(_objName);
 
 	function extHover(class_name) {
-		if(class_name in styles) {
-			for(var prop in styles[class_name]) {
-				if(prop === 'extend')
+		if (class_name in styles) {
+			for (var prop in styles[class_name]) {
+				if (prop === 'extend')
 					extHover(styles[class_name].extend);
-				else 
+				else
 					self._hoverStyles['_' + prop] = styles[class_name][prop];
 			}
 		}
 	}
 
-	if(_objName + 'Hover' in styles || o.onHover || o.onBlur) {
+	if (_objName + 'Hover' in styles || o.onHover || o.onBlur) {
 
 		extHover(_objName + 'Hover')
 		console.log(this, this._hoverStyles);
@@ -136,32 +144,31 @@ function SceneObject(_scene, _objName, o) {
 	this._borderWidth = o.borderWidth || 0;
 	this._borderColor = o.color || o.borderColor || 'black';
 
-	if(o.bgImage) {
-		this._bgImage = o.bgImage;
-		this._imgWidth = o.imgWidth || o.bgImage.width;
-		this._imgHeight = o.imgHeight || o.bgImage.height;
-	}
+	this._setBgImage(o);
+
 
 	this._zIndex = (o.zIndex || 0) + this._scene.attr('zIndex');
 
-	this._text = o.text || '';
-	if(this._text) {
-		this._textFromLeft = (o.textFromLeft || 0) + this._left;
-		this._textFromTop = (o.textFromTop || 0) + this._top;
-
-		this._color = o.color || '#000';
-		this._fontSize = o.fontSize || '12px';
-		this._textBaseLine = o.textBaseline || 'top';
-		this._fontFamily = o.fontFamily || 'Arial';
-		this._textAlign = o.textAlign || 'left';
-	}
+	this._setText(o);
 
 	this._onClick = o.onClick && o.onClick.bind(this) || null;
 
 	this._createActiveObjectFromSelf();
 }
 
-SceneObject.prototype._setDimensions = function(o) {
+var _p = SceneObject.prototype;
+
+_p._setBgImage = function(o) {
+	if (!o.bgImage)
+		return;
+
+	this._bgImage = o.bgImage;
+	this._imgWidth = o.imgWidth || o.bgImage.width;
+	this._imgHeight = o.imgHeight || o.bgImage.height;
+}
+
+
+_p._setDimensions = function(o) {
 	this._left = (o.left || 0) + this._scene.attr('left');
 	this._top = (o.top || 0) + this._scene.attr('top')
 	this._width = o.width || this._scene.attr('width');
@@ -173,7 +180,24 @@ SceneObject.prototype._setDimensions = function(o) {
 		this._top += (this._scene.attr('height') - this._height) / 2;
 };
 
-SceneObject.prototype._createActiveObjectFromSelf = function() {
+_p._setText = function(o) {
+	this._text = o.text || '';
+	if (!this._text)
+		return;
+
+	this._textFromLeft = (o.textFromLeft || 0) + this._left;
+	this._textFromTop = (o.textFromTop || 0) + this._top;
+
+	this._color = o.color || '#000';
+	this._fontSize = o.fontSize || '12px';
+	this._textBaseLine = o.textBaseline || 'top';
+	this._fontFamily = o.fontFamily || 'Arial';
+	this._textAlign = o.textAlign || 'left';
+};
+
+
+
+_p._createActiveObjectFromSelf = function() {
 	this._ao = activeObjects.add({
 		left: this._left,
 		top: this._top,
@@ -187,9 +211,9 @@ SceneObject.prototype._createActiveObjectFromSelf = function() {
 	});
 };
 
-SceneObject.prototype.draw = function() {
+_p.draw = function() {
 	var o = extend({}, this);
-	if(o._hover) {
+	if (o._hover) {
 		extend(o, o._hoverStyles);
 	}
 
@@ -201,7 +225,7 @@ SceneObject.prototype.draw = function() {
 		var isFill = !!o._bgColor;
 		var isStroke = (o._borderWidth > 0);
 
-		if(o._shape === 'rect') {
+		if (o._shape === 'rect') {
 			ctx.roundRect(o._left, o._top, o._width, o._height, o._cornerRadius, isFill, isStroke)
 		}
 	}
@@ -219,12 +243,12 @@ SceneObject.prototype.draw = function() {
 	}
 };
 
-SceneObject.prototype.remove = function() {
+_p.remove = function() {
 	this._ao && this._ao.remove();
 	delete this._scene[this._objName];
 };
 
-SceneObject.prototype.attr = function() {
+_p.attr = function() {
 	if (arguments.length === 1)
 		return this['_' + arguments[0]];
 	else {
@@ -354,19 +378,4 @@ var styles = {
 		text: 'Graphics:',
 		zIndex: 1
 	},
-
-
-
-
-	// SETTINGS
-	menu: {
-		alignVertical: true,
-		color: '#aaa',
-		left: 10,
-		textFromLeft: 10,
-		width: 200,
-		height: 20,
-		fontSize: '16px',
-		bgColor: 'white'
-	}
 };

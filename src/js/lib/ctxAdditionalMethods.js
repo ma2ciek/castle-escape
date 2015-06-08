@@ -69,7 +69,7 @@ function addAdditionalfunctionsToCtx(ctx) {
         // odgłos pierwszej litery
         sound && txt[i] !== ' ' && sound.cloneNode().play();
 
-        (function loop() {
+        function getDefault(self) {
             self.lineWidth = lineWidth;
             self.textAlign = 'left';
             self.save();
@@ -77,11 +77,14 @@ function addAdditionalfunctionsToCtx(ctx) {
             self.lineJoin = "round";
             self.globalAlpha = alpha;
             self.textBaseline = "hanging";
-           
-            // self.clearRect(x, y, 60, fontSize);
-            self.setLineDash([dashLen - dashOffset, dashOffset - speed]);
-            dashOffset -= speed;
+            self.setLineDash([dashLen - dashOffset, dashOffset - speed]);           
             self.strokeStyle = stroke;
+        }
+
+
+        (function loop() {
+            getDefault(self);
+            dashOffset -= speed;
             self.strokeText(txt[i], x, y);
 
             if (dashOffset > 0) requestAnimationFrame(loop);

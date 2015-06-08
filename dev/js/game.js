@@ -1,3 +1,2613 @@
-/*! castle-escape 2015-06-07 */
-"use strict";function init(){canvas=document.getElementsByTagName("CANVAS")[0],ctx=canvas.getContext("2d"),addAdditionalfunctionsToCtx(ctx),activeObjects=new ActiveObjectsManager(canvas),activeObjects.watch(),AORenderer=new ActiveObjectsRenderer(ctx,activeObjects),settings=new Settings,audioManager=new AudioManager,user=new User,game=new Game}function addAdditionalfunctionsToCtx(a){a.roundRect=function(a,b,c,d,e,f,g){void 0===g&&(g=!0),e||(e=5),this.beginPath(),this.moveTo(a+e,b),this.lineTo(a+c-e,b),this.quadraticCurveTo(a+c,b,a+c,b+e),this.lineTo(a+c,b+d-e),this.quadraticCurveTo(a+c,b+d,a+c-e,b+d),this.lineTo(a+e,b+d),this.quadraticCurveTo(a,b+d,a,b+d-e),this.lineTo(a,b+e),this.quadraticCurveTo(a,b,a+e,b),this.closePath(),g&&this.stroke(),f&&this.fill()},a.circle=function(a,b,c,d,e){return this.beginPath(),d&&(this.fillStyle=d),this.arc(a,b,c,0,2*Math.PI,!1),this.fill(),e&&(this.strokeStyle=e,this.stroke()),this},a.style=function(b){extend(a,b)},a.drawRect=function(a,b,c,d,e,f){e&&(this.fillStyle=e),this.fillRect(a,b,c,d),f&&(this.strokeStyle=f,this.strokeRect(a,b,c,d))},a.handDrawnText=function(a,b,c,d,e,f,g){var h=220,i=h,j=15,k=this.lineWidth=3,l=50,m=this.font=l+"px Comic Sans MS, cursive, TSCu_Comic, sans-serif",n=.2,o=0,p=function(){},q=this;return q.textAlign="left",e=e||"#000",d=d||"rgba(0, 0, 0, 0.5)",f===!0&&(b-=(this.measureText(a).width+k*a.length/2)/2,console.log(b)),g&&" "!==a[o]&&g.cloneNode().play(),function r(){q.lineWidth=k,q.textAlign="left",q.save(),q.font=m,q.lineJoin="round",q.globalAlpha=n,q.textBaseline="hanging",q.setLineDash([h-i,i-j]),i-=j,q.strokeStyle=d,q.strokeText(a[o],b,c),i>0?requestAnimationFrame(r):(q.fillStyle=e,q.fillText(a[o],b,c),i=h,b+=q.measureText(a[o++]).width+k*Math.random(),q.setTransform(1,0,0,1,0,4*Math.random()),o<a.length?(g&&" "!==a[o]&&g.cloneNode().play(),requestAnimationFrame(r)):p()),q.restore()}(),{next:function(a){p=a},wait:function(a,b){p=function(){window.setTimeout(b,a)}}}}}function createArray(a){var b=new Array(a||0),c=a;if(arguments.length>1)for(var d=[].slice.call(arguments,1);c--;)b[a-1-c]=createArray.apply(this,d);return b}function extend(a){for(var b=Array.prototype.splice.call(arguments,1),c=0;c<b.length;c++){var d=b[c];for(var e in d)a[e]=d[e]}return a}function loadJSON(){function a(){0===--g&&(0===b.length?e&&e.apply(this,d):f&&f.apply(this,b))}for(var b=[],c=[].slice.call(arguments),d=new Array(c.length),e=null,f=null,g=c.length,h=0;h<c.length;h++){var i=new XMLHttpRequest;i.open("GET",c[h],!0),i.send(null),i.responseType="json",i.onload=function(e){return function(f){if(200===f.target.status){var g=f.target.response;d[e]=g,a()}else b.push(c[e]),a()}}(h),i.onerror=function(){b.push(c[this]),a()}.bind(h)}return{then:function(a){return e=a,this},fail:function(a){return f=a,this}}}function RectCollision(a,b){return b.x<a.x+a.width&&b.y<a.y+a.height&&b.x+b.width>a.x&&b.y+b.height>a.y?!0:!1}function shallowCopyTo(a,b){for(var c in b)b.hasOwnProperty(c)&&(a[c]=b[c]);return a}function screenToWorld(a,b){}function worldToScreen(a,b){}function relativate(a,b){return{x:Math.floor(a-game._player.x-game._player.width/2+game._board.width/2),y:Math.floor(b-game._player.y-game._player.width/2+game._board.height/2)}}function ActiveObjectsManager(a){this._canvas=a,this._list=[],this._selected=null,this._hover=null,this._mousePos={x:0,y:0}}function ActiveObject(a,b){this._manager=a,this.leftClick=b.leftClick||null,this.rightClick=b.rightClick||null,this.onHover=b.onHover||null,this.onBlur=b.onBlur||null,this.onMouseOut=b.onMouseOut||null,this.x=b.left||b.x||0,this.y=b.top||b.y||0,this.width=b.width,this.height=b.height,this.shape=b.shape||"rect",this.zIndex=b.zIndex||0,this.fromCenter=b.fromCenter||!1,this._data={},this._classes={},this.fromCenter||"arc"!==this.shape||(this.x+=this.radius,this.y+=this.radius),this.fromCenter&&"rect"===this.shape&&(this.x-=this.width/2,this.y-=this.height/2)}function ActiveObjectsRenderer(a,b){this._ctx=a,this._AOManager=b}function Animation(a,b,c){c=c||{},this._obj=a,this._size=c.size,this._dynamicallyCreateFrames(c),this._timeStamp=0,this._frameIndex=c.startIndex||0,this._frameLooped=c.frameLooped||!1,this._frameDuration=c.frameDuration||3,b&&(this._audio=b.cloneNode(),this._audio.addEventListener("ended",this._onAudioEnded),this._audioLooped=c.audioLooped||!1),this._priorytet=c.priorytet||0}function Assignments(){extend(this,new EventEmitter),this._list={},this._keys={},this._activeBinding=null,this._setKeyNames(),this._setDefaultAssignments(),this._loadAssignmentsFromStorage()}function AudioManager(){extend(this,new EventEmitter),this._list={},this._globalVolume=settings.get("AUDIO_VOLUME"),this._muted=settings.get("AUDIO_MUTED"),this._waiting=0}function BgAudio(){this._bgAudio=null}function Board(){this._scenes=[],extend(this,new EventEmitter),this.imgManager=new ImageManager,this.width=window.innerWidth,this.height=window.innerHeight,this.resize();var a=this;this.imgManager.add({"castle-in-clouds":"./img/castle-in-clouds.png"})._addEventListener("loaded",function(){a.redrawScenes()})}function DocumentQuery(){var a=[];if("object"==typeof arguments[0]){for(var b=0;b<arguments.length;b++){var c=arguments[b];if(c.length)for(var d=0;d<c.length;d++)a=a.concat(c[d]);else a=a.concat(c)}return new DocumentObjectsManager(a)}var e=document.createElement(arguments[0]);return new DocumentObjectsManager([e])}function DocumentObjectsManager(a){console.log(a);for(var b=0;b<a.length;b++)console.log(0),this[b]=a[b];this._elements=a}function EventEmitter(){this._events={}}function Timeline(){this._timeEvents={},this._frame=0}function Game(){BgAudio.call(this),extend(this,new EventEmitter),this._board=new Board,this._loadAudio()}function GameObject(a,b){switch(extend(this,new EventEmitter),b.name){}extend(this,b)}function ImageManager(){extend(this,new EventEmitter),this._counter=0,this._list={}}function Player(a){var b=this;this._world=a,this.x=1265,this.y=2140,this.Vy=0,this.width=48,this.height=92,this.speed=7,this.shadowRelativePosition={get x(){return b.x+23},get y(){return b.y+15},get width(){return 20},get height(){return 67}},this.jumpHeight=20,this.isOnLadder=!1,extend(this,new EventEmitter),extend(this,GameObject.prototype),this.frameSets=["moveDown","moveDownLeft","moveLeft","moveUpLeft","moveUp","moveUpRight","moveRight","moveDownRight"],this.animations={},this.currentAnimationName=this.frameSets[0];var c=3,d=48,e=92,f=9;this.image=new Image,this.image.src="img/walk-cycle.png";var b=this;this.ready=!1,this.image.addEventListener("load",function(){b.frameSets.forEach(function(a,g){b.animations[a]=new Animation(b,!1,{image:b.image,frameWidth:d,frameHeight:e,size:f,frameLooped:!0,offsetTop:e*g,frameDuration:c})}),b.ready=!0,a.addObject(b)})}function Scene(a,b){extend(this,new EventEmitter),this._board=a,this._isVivible=!!b.isVivible,this._height=b.height||a.height,this._width=b.width||a.width,this._left=b.left||a.width-b.right||0,this._top=b.top||a.width-b.bottom||0,b.alignCenter&&(this._left=(a.width-this._width)/2),b.alignVertical&&(this._top=(a.height-this._height)/2),this._bgColor=b.bgColor||null,b.bgImage&&(this._bgImage=a.imgManager[b.bgImage]),this._objects=[],this._zIndex=b.zIndex||0,this._objects={},this._sortedObjects=[];for(var c in b.objects)this._objects[c]=new SceneObject(this,c,b.objects[c]);this._sortObjects()}function SceneObject(a,b,c){function d(a){if(a in styles)for(var b in styles[a])"extend"===b?d(styles[a].extend):c[b]=styles[a][b]}function e(a){if(a in styles)for(var b in styles[a])"extend"===b?e(styles[a].extend):f._hoverStyles["_"+b]=styles[a][b]}var f=this;this._scene=a,this._objName=b,this._hoverStyles={},d(b),(b+"Hover"in styles||c.onHover||c.onBlur)&&(e(b+"Hover"),console.log(this,this._hoverStyles),this._onHover=function(){c.onHover&&c.onHover.call(f),f._hover=!0,f._scene._trigger("dirt")},this._onBlur=function(){c.onBlur&&c.onBlur.call(f),f._hover=!1,f._scene._trigger("dirt")}),this._setDimensions(c),this._shape=c.shape||"rect",this._cornerRadius=c.cornerRadius||0,this._bgColor=c.bgColor||"",this._borderWidth=c.borderWidth||0,this._borderColor=c.color||c.borderColor||"black",c.bgImage&&(this._bgImage=c.bgImage,this._imgWidth=c.imgWidth||c.bgImage.width,this._imgHeight=c.imgHeight||c.bgImage.height),this._zIndex=(c.zIndex||0)+this._scene.attr("zIndex"),this._text=c.text||"",this._text&&(this._textFromLeft=(c.textFromLeft||0)+this._left,this._textFromTop=(c.textFromTop||0)+this._top,this._color=c.color||"#000",this._fontSize=c.fontSize||"12px",this._textBaseLine=c.textBaseline||"top",this._fontFamily=c.fontFamily||"Arial",this._textAlign=c.textAlign||"left"),this._onClick=c.onClick&&c.onClick.bind(this)||null,this._createActiveObjectFromSelf()}function Settings(){this._options={},this._storageOptions={},this._defaultOptions={AUDIO_MUTED:!1,AUDIO_VOLUME:1,AUTO_SAVE:!0},this._assignments=new Assignments,this._loadSettingsFromStorage(),shallowCopyTo(this._options,this._defaultOptions),shallowCopyTo(this._options,this._storageOptions)}function User(){this.lang=navigator.language||navigator.userLanguage||"pl",this.cores=navigator.hardwareConcurrency||4,this.touchPoints=navigator.maxTouchPoints,this.keys={},this._setEventListeners(),this.actions={}}function World(a){this._game=a,this._layers=[],this._tileSets=[],this._sprites={},this._objects=[],this._objectsOnScreen=[],this._objectTypes=[],this._loadData(),extend(this,new EventEmitter)}function TileSet(a){extend(this,a),this.load()}document.addEventListener("init",function(){init()});var canvas,ctx,user,audioManager,settings,game,activeObjects,AORenderer,Vector=function(a,b){this.dx=a,this.dy=b,this.size=Math.sqrt(a*a+b*b),this.unit={x:this.dx/this.size,y:this.dy/this.size}},fps=function(){function a(a,b){var c=e;a.textAlign=c.textAlign,a.textBaseline=c.textBaseline,a.fillStyle=c.fillStyle,a.font=c.fontSize+"px "+c.fontFamily,a.fillText("FPS:"+b,c.left,c.top)}var b=[0],c=0,d=Date.now(),e={left:0,top:0,fontSize:15,fontFamily:"Verdana",maxLength:60,fillStyle:"black",textBaseline:"top",textAlign:"left"};return{count:function(f){var g=Date.now()-d;d=Date.now(),b.length>e.maxLength&&(c-=b.pop()),b.unshift(g),c+=g;var h=1e3/(c/b.length)|0;a(f,h)},set:function(a){if("object"!=typeof a)throw new Error("Wrong data type");for(var b in a){if(!e.hasOwnProperty(b))throw new Error("Wrong option name");void 0!==a[b]&&(e[b]=a[b])}}}}();Math.sign=Math.sign||function(a){return 0===a?0:a/Math.abs(a)},Array.prototype.includes=Array.prototype.includes||function(a){return-1!==this.indexOf(a)},Date.now=Date.now||function(){return+new Date};var _p=ActiveObjectsManager.prototype;_p.add=function(a){var b=new ActiveObject(this,a);return this._list.push(b),b},_p.get=function(a,b){for(var c=-(1/0),d=null,e=this._list,f=0;f<e.length;f++){var g=e[f];switch(g.shape){case"rect":g.x<=a&&g.x+g.width>=a&&g.y<=b&&g.y+g.height>=b&&g.zIndex>c&&(d=g,c=g.zIndex);break;case"arc":(g.x-a)*(g.x-a)+(g.y-b)*(g.y-b)<=g.radius*g.radius&&g.zIndex>c&&(d=g,c=g.zIndex);break;default:throw new TypeError("Wrong shape")}}return d},_p.getSelected=function(){return this._selected},_p.getHover=function(){return this._hover},_p.getAll=function(){return this._list},_p.filter=function(a){for(var b=[],c=0;c<this._list.length;c++){var d=this._list[c],e=a.call(d,d);e&&b.push(d)}return b},_p.each=function(a){for(var b=0;b<this._list.length;b++){var c=this._list[b];a.call(c,c)}},_p.remove=function(a){var b=this._list.indexOf(a);this._list.splice(b,1)},_p.removeAll=function(){this._list.length=0,this._hover=null},_p.watch=function(){var a=this;window.addEventListener("mousedown",a._mouseClick.bind(a)),this._canvas.addEventListener("mousemove",a._mouseMove.bind(a)),this._canvas.addEventListener("mouseleave",a._mouseLeaveCanvas.bind(a))},_p.unwatch=function(a){var b=this;window.removeEventListener("mousedown",b._mouseClick),this._canvas.removeEventListener("mousemove",b._mouseMove),this._canvas.removeEventListener("mouseleave",b._mouseLeaveCanvas)},_p._mouseClick=function(a){var b=this._getCursorPosition(a),c=this.get(b.x,b.y);if("CANVAS"===a.target.nodeName)if(1===a.which){var d=this._selected;c!=d&&d&&"function"==typeof d.onBlur&&d.onBlur(),c&&"function"==typeof c.leftClick&&c.leftClick(a),this._selected=c}else if(3===a.which)return c&&"function"==typeof c.rightClick&&c.rightClick(a),this._selected=null,!1},_p._mouseMove=function(a){var b=this._getCursorPosition(a);if(this._hover!==this.get(b.x,b.y)){var c=this._hover,d=this._hover=this.get(b.x,b.y);c&&"function"==typeof c.onMouseOut&&c.onMouseOut(),d&&"function"==typeof d.onHover&&d.onHover(a)}this._mousePos=b},_p._mouseLeaveCanvas=function(a){this._hover=null},_p._getCursorPosition=function(a){return{x:a.pageX-a.target.offsetLeft,y:a.pageY-a.target.offsetTop}};var _p=ActiveObject.prototype;_p.centerX=function(){return this.x+this.width/2},_p.centerY=function(){return this.y+this.height/2},_p.remove=function(){this._manager.remove(this)},_p.data=function(){var a=arguments;switch(a.length){case 0:return this._data;case 1:if("object"!=typeof a[0])return this._data[a[0]];for(var b in a[0]){var c=a[0][b];this._data[b]=c}break;case 2:this._data[a[0]]=a[1];break;default:throw new Error("Too many arguments")}},_p.addClass=function(a,b){this._classes[a]=b},_p.removeClass=function(a){delete this._classes[a]},_p.getClasses=function(){return this._classes};var _p=ActiveObjectsRenderer.prototype;_p.renderAll=function(){for(var a=this._AOManager.getAll(),b=0;b<a.length;b++){var c=a[b];this.renderActiveObject(c)}},_p.renderActiveObject=function(a){var b=this._isHover(a),c=a.getClasses(),d=extend({},this._defaultStyle,a.data());b&&extend(d,a.data("hover"));for(var e in c){var f=c[e];extend(d,f)}d.bgColor&&this._drawBackground(a,d),d.innerText&&this._drawText(a,d)},_p._isHover=function(a){return a===this._AOManager.getHover()&&"undefined"!=typeof a.data("hover")},_p._drawBackground=function(a,b){this._ctx.fillStyle=b.bgColor,this._ctx.fillRect(a.x,a.y,a.width,a.height)},_p._drawText=function(a,b){var c=(this._defaultStyle,b.innerText);this._ctx.textBaseline=b.textBaseline,this._ctx.font=b.textFont,this._ctx.fillStyle=b.textColor,this._ctx.textAlign=b.textAlign;var d;switch(b.textAlign){case"left":d=a.x;break;case"center":d=a.x+a.width/2;break;case"right":d=a.x+a.width;break;default:throw new Error("No such option")}var e=this._ctx.measureText("M").width,f=a.y+(a.height-e)/2;this._ctx.fillText(c,d,f)},_p._defaultStyle={textBaseline:"hanging",textColor:"#000",textFont:"15px Arial",textAlign:"center"},_p.renderScene=function(a){for(var b=(this._ctx,this._AOManager.filter(function(){return this.data("scene")===a})),c=0;c<b.length;c++){var d=b[c];console.log(d),this.renderActiveObject(d)}};var _p=Animation.prototype;_p._onAudioEnded=function(){this._audioLooped&&this._audio.play(),this._obj._trigger("audioEnded")},_p._dynamicallyCreateFrames=function(a){var b=a.offsetLeft||0,c=a.offsetTop||0;if(console.log(a.size),this.frames=[],"column"===a.frameDirection)for(var d=0;d<a.size;d++)this.frames[d]={width:a.frameWidth,height:a.frameHeight,image:a.image,x:b,y:a.frameHeight*d+c};else for(var d=0;d<a.size;d++)this.frames[d]={width:a.frameWidth,height:a.frameHeight,image:a.image,x:a.frameWidth*d+b,y:c}},_p.setFrameIndex=function(a){this._frameIndex=a},_p.getPrirytet=function(){return this._priorytet},_p.nextFrame=function(){this._timeStamp+this._frameDuration<game.getFrameIndex()&&(this._timeStamp=game.getFrameIndex(),this._frameIndex<this._size-1?this._frameIndex++:this._frameLooped?this._frameIndex=0:(this._end=1,this._obj._trigger("animationEnd")))},_p.getCurrentFrame=function(){var a=this.frames[this._frameIndex];return{image:a.image,x:a.x,y:a.y,width:a.width,height:a.height}},Assignments.prototype.getList=function(){return this._list},Assignments.prototype.getCodeFromAction=function(a){var b=this._list[a];for(var c in this._keys)if(this._keys[c]===b)return c},Assignments.prototype.getActionFromCode=function(a){var b=this._keys[a];for(var c in this._list)if(this._list[c]==b)return c},Assignments.prototype.getKeyName=function(a){return this._list[a]},Assignments.prototype.setActiveBinding=function(a){this._activeBinding=a},Assignments.prototype._setKeyNames=function(){var a,b={8:"Backspace",9:"Tab",13:"Enter",16:"Shift",17:"Ctrl",18:"Alt",19:"Pause/Break",20:"Caps lock",27:"Escape",32:"Space",33:"Page up",34:"Page down",35:"End",36:"Home",37:"Left arrow",38:"Up arrow",39:"Right arrow",40:"Down arrow",45:"Insert",46:"Delete",91:"Left window key",92:"Right window key",93:"Select key",144:"Num lock",145:"Scroll lock",186:"Semicolon",187:"Equal sign",188:"Comma",189:"Dash",190:"Period",191:"Forward slash",192:"Grave accent",219:"Open bracket",220:"Back slash",221:"Close bracket",222:"Quote",255:"Fn"};for(a=48;57>=a;a++)b[a]=String.fromCharCode(a);for(a=65;90>=a;a++)b[a]=String.fromCharCode(a);for(a=96;105>=a;a++)b[a]="Numpad "+(a-96);for(a=112;123>=a;a++)b[a]="F"+(a-111);this._keys=b},Assignments.prototype._loadAssignmentsFromStorage=function(){var a=window.localStorage.getItem("Castle_Ecape_Bindings")||"{}",b=JSON.parse(a);for(var c in b)this._list[c]=b[c]},Assignments.prototype.tryBind=function(a){var b=this._keys[a];for(var c in this._list)if(c===this._activeBinding)return this._list[c]=b||"",this._removeAssignmentNotFrom(b,c),this._saveAssignmentToStorage(),this._trigger("changeAssignnment",c),!0},Assignments.prototype._removeAssignmentNotFrom=function(a,b){for(var c in this._list)if(this._list[c]===a&&b!=c){this._list[c]="",this._trigger("changeAssignnment",c);break}},Assignments.prototype._saveAssignmentToStorage=function(){var a=JSON.stringify(this._list);window.localStorage.setItem("Castle_Ecape_Bindings",a)},Assignments.prototype._setDefaultAssignments=function(){var a={"Move Left":"Left arrow","Move Right":"Right arrow","Climb Up":"Up arrow","Climb Down":"Down arrow",Jump:"Space",Attack:"Alt",Inventory:"I"};for(var b in a)this._list[b]=a[b],this._trigger("changeAssignnment",b)};var _p=AudioManager.prototype;_p.add=function(a){var b=Object.keys(a).length;this._waiting+=b;for(var c in a){var d=a[c],e=new Audio;e.name=c,e.src=d.src,e.localVolume=d.volume?d.volume/100:1,e.volume=this._globalVolume*e.localVolume,e.muted=this._muted,d.loop&&!d.once&&e.addEventListener("ended",function(){this.play()}),e.addEventListener("canplaythrough",function(a,b,c){this._list[c]=a,this._loaded()}.bind(this,e,d,c)),e.onerror=function(a){console.error("Cannot load this file: "+a.src),this._loaded()}.bind(this,d)}return this},_p.get=function(a){return a in this._list?this._list[a]:void console.error("Missing audio file: "+a)},_p._loaded=function(){console.log(this._waiting),this._waiting--,0===this._waiting&&this._trigger("audioLoaded")},_p.changeGlobalVolume=function(a){this._globalVolume=a,settings.set("AUDIO_VOLUME",a);for(var b in this._list)this._list[b].volume=this._list[b].localVolume*a},_p.muteAll=function(){this._muted=!0,settings.set("AUDIO_MUTED",!0);for(var a in this._list)this._list[a].muted=!0},_p.unmuteAll=function(){this._muted=!1,settings.set("AUDIO_MUTED",!1);for(var a in this._list)this._list[a].muted=!1},BgAudio.prototype._setBgAudio=function(a){if(this._bgAudio){if(this._bgAudio.name===a)return;this._bgAudio.pause()}try{this._bgAudio=audioManager.get(a),this._bgAudio.currentTime=0,this._bgAudio.play()}catch(b){console.error(b)}},Board.prototype.resize=function(){function a(){b.width=canvas.width=document.documentElement.clientWidth||document.body.clientWidth,b.height=canvas.height=document.documentElement.clientHeight||document.body.clientHeight,b.redrawScenes()}var b=this;window.addEventListener("resize",a),a()},Board.prototype.clear=function(){ctx.fillStyle="#000",ctx.fillRect(0,0,this.width,this.height)},Board.prototype.drawScenes=function(){for(var a=0;a<this._scenes.length;a++)this._scenes[a].draw()},Board.prototype.redrawScenes=function(){ctx.clearRect(0,0,this.width,this.height),this.drawScenes()},Board.prototype._addScene=function(a){var b=this;this._scenes.push(a),this._scenes.sort(function(a,b){return a.zIndex-b.zIndex}),a._addEventListener("dirt",b.redrawScenes.bind(b)),this.redrawScenes()},Board.prototype._removeScene=function(a){a.remove(),this._scenes.splice(this._scenes.indexOf(a)),this.redrawScenes()},Board.prototype.removeScenes=function(a){for(var b=0;b<this._scenes.length;b++)this._scenes[b].remove();this._scenes.length=0,console.log(this._scenes)},Board.prototype.createWelcomeScene=function(){this._addScene(new Scene(this,{objects:{castleImage:{},title:{},sky:{},ground:{},HOME_author:{},play:{onClick:function(){location.hash="play"}},resume:{onClick:function(){location.hash="continue"}},credits:{onClick:function(){location.hash="credits"}},settings:{onClick:function(){location.hash="settings"}}}}))},Board.prototype.createSettingsScene=function(){var a=this,b=settings.assignmentsGUI;b._addEventListener("dirt-window",function(){a.clear(),AORenderer.renderScene("Controls")}),window.addEventListener("keydown",function(a){var b=settings.assignments.tryBind(a.keyCode);b&&a.preventDefault()}),window.addEventListener("resize",function(a){Math.max(b.getMinHeight(),window.innerHeight);b._trigger("dirt-window")}),b.createActiveObjects(),b._trigger("dirt-window")},Board.prototype.createCreditsScene=function(){this._addScene(new Scene(this,{bgColor:"#000",zIndex:6,objects:{bg:{onClick:function(){location.hash=""}},author:{onClick:function(){location.href="http://www.google.com"}},graphics:{}}}))};var $=DocumentQuery,_p=DocumentObjectsManager.prototype;_p.valueOf=function(){return this._elements},_p._each=function(a){for(var b=0;b<this._elements.length;b++){var c=this._elements[b];a.call(c,c)}},_p.addClass=function(a){this._each(function(b){b.className+=b.className?" "+a:a})},_p.removeClass=function(a){this._each(function(b){var c=new RegExp("\\s*"+a+"\\s*","g");b.className=b.className.replace(c," ")})},_p.hasClass=function(a){var b=this._elements[0],c=new RegExp(a,"g");return c.test(b.className)},_p.hide=function(a,b){var c=this;this._each(function(d){var e=a?30/a:.04,f=""===d.style.opacity?1:parseFloat(d.style.opacity);d.style.opacity=Math.max(0,f-e),d.style.opacity>0?window.setTimeout(c.hide.bind(c,a,b),30):b&&b()})},_p.show=function(a,b,c){var d=this;this._each(function(a){var e=b?30/b:.04,f=""===a.style.opacity?1:parseFloat(a.style.opacity);a.style.opacity=Math.min(1,f+e),a.style.opacity<1?window.setTimeout(d.show.bind(d,b,c),30):c&&c()})},EventEmitter.prototype._addEventListener=function(a,b){this._events[a]||(this._events[a]=[]),"function"!=typeof b&&console.error("eventHandler must be a function"),this._events[a].push(b.bind(this))},EventEmitter.prototype._trigger=function(a){var b=this._events[a];if(b)for(var c=Array.prototype.slice.call(arguments,1),d=0;d<b.length;d++)b[d].apply(this,c)},EventEmitter.prototype._removeEventListener=function(a,b){if("undefined"!=typeof this._events[a]){var c=this._events[a].indexOf(b);if(console.log(b,this._events),-1!==c)return this}},EventEmitter.prototype._dispatch=function(a){a in this._events&&(this._events[a].length=0)},EventEmitter.prototype._getEventListeners=function(a){return this._events[a]},Timeline.prototype.getCurrentFrameIndex=function(){return this._frame},Timeline.prototype.addEvent=function(a,b,c){a+=this._frame,this._timeEvents[a]||(this._timeEvents[a]=[]),this._timeEvents[a].push(b.bind(c))},Timeline.prototype.showEvents=function(){return this._timeEvents},Timeline.prototype.check=function(){var a=this._timeEvents[this._frame];if(a){for(var b=0;b<a.length;b++)a[b].call(this);delete this._timeEvents[this._frame]}},Timeline.prototype.getFrameIndex=function(){return this._frame},extend(Game.prototype,BgAudio.prototype),Game.prototype._loadAudio=function(a){var b=this;loadJSON("data/audio.json").then(function(a){audioManager.add(a),audioManager._addEventListener("audioLoaded",b.onAudioLoaded.bind(b))})},Game.prototype.onAudioLoaded=function(){console.log(audioManager._list),this._setNavigation()},Game.prototype.play=function(){extend(this,new Timeline),this._pause=!1,this._world=new World(this);var a=this;a._setBgAudio("game-music"),this._world._addEventListener("loaded",function(){a._player=new Player(this),a._nextFrame()})},Game.prototype.pause=function(){this._pause=!0,this._bgAudio&&this._bgAudio.pause()},Game.prototype.resume=function(){this._pause=!1,this._nextFrame(),this._bgAudio&&this._bgAudio.play()},Game.prototype._nextFrame=function(){try{this._frame++,this.check(),this._player.move(),this._board.clear(),this._world.drawLayers(),this._world.drawObjects(),this._board.drawScenes(),fps.count(ctx),this._pause||window.requestAnimationFrame(this._nextFrame.bind(this))}catch(a){console.log(a)}},Game.prototype.goToStartPage=function(){this._setBgAudio("start-music"),this._board.createWelcomeScene()},Game.prototype.goToCreditsPage=function(){this._setBgAudio("start-music"),this._board.createCreditsScene()},Game.prototype.goToSettingsPage=function(){this._setBgAudio("start-music"),this._board.createSettingsScene()},Game.prototype._setNavigation=function(){function a(a){a&&(a.preventDefault(),a.stopPropagation()),b._pause=!0,b._board.removeScenes(),activeObjects.removeAll();var c=0==location.hash.length?"":location.hash.slice(1);switch(c){case"play":b.play();break;case"":b.goToStartPage();break;case"credits":b.goToCreditsPage();break;case"resume":break;case"settings":b.goToSettingsPage();break;default:console.error(c)}}var b=this;window.addEventListener("hashchange",a),a()},GameObject.prototype.draw=function(){var a=this.animations[this.currentAnimationName],b=relativate(this.x,this.y),c=a.getCurrentFrame();ctx.drawImage(c.image,c.x,c.y,c.width,c.height,b.x,b.y,c.width,c.height)};var _p=ImageManager.prototype;_p.add=function(a){for(var b in a){this._counter++;var c=this._list[b]=new Image;c.src=a[b],c.onload=this._onload.bind(this,b,c.src),c.onerror=this._onerror.bind(this,b,c.src)}return this},_p._onload=function(a){this._count()},_p._onerror=function(a,b){this._trigger("error"),console.error(a,b),this._count()},_p._count=function(){this._counter--,0===this._counter&&this._trigger("loaded")},_p.get=function(a){return this._list[a]};var _p=Player.prototype;_p.animate=function(a){this.ready&&(this.currentAnimationName===a?this.animations[a].nextFrame():(this.currentAnimationName=a,this.animations[a].nextFrame()))},_p.move=function(){var a=0,b=0;this.x,this.y;user.actions["Climb Up"]&&b--,user.actions["Climb Down"]&&b++,user.actions["Move Left"]&&a--,user.actions["Move Right"]&&a++;var c=user.actions.Jump?!0:!1,d=3,e=this.getTilesFromCollisionWithLayer(0);if(0===b&&!this.isOnLadder||-1===e.indexOf(d)){this.isOnLadder=!1,this.Vy++,this.y+=this.Vy;var f=this.isCollisionWithLayer(1);if(f){for(;this.isCollisionWithLayer(1);)this.y-=Math.sign(this.Vy);if(this.Vy=0,c&&(this.Vy-=this.jumpHeight,this.y+=this.Vy,this.isCollisionWithLayer(1))){for(;this.isCollisionWithLayer(1);)this.y-=Math.sign(this.Vy);this.Vy=0}}}else if(c){if(this.isOnLadder=!1,this.Vy=-this.jumpHeight,this.y+=this.Vy,this.isCollisionWithLayer(1)){for(;this.isCollisionWithLayer(1);)this.y-=Math.sign(this.Vy);this.Vy=0}}else if(this.isOnLadder=!0,this.Vy=0,this.y+=this.speed*b,this.isCollisionWithLayer(1)||!this.getTilesFromCollisionWithLayer(0).includes(d)&&-1===b)for(;this.isCollisionWithLayer(1)||!this.getTilesFromCollisionWithLayer(0).includes(d);)this.y-=b;else 0!==b&&this.animate("moveUp");if(0!==a)if(this.x+=this.speed*a,this.isCollisionWithLayer(1))for(;this.isCollisionWithLayer(1);)this.x-=a;else 1===a?this.animate("moveRight"):-1===a&&this.animate("moveLeft")},_p.isCollisionWithLayer=function(a){for(var b=this.shadowRelativePosition,c=this._world._layers[a].data,d=b.y/this._world.outputTileHeight|0,e=(b.y+b.height)/this._world.outputTileHeight|0,f=(b.x-b.width/2)/this._world.outputTileWidth|0,g=(b.x+b.width/2)/this._world.outputTileWidth|0,h=f;g>=h;h++)for(var i=d;e>=i;i++){var j=i*this._world.width+h;if(0!==c[j])return!0}return!1},_p.getTilesFromCollisionWithLayer=function(a){for(var b=this.shadowRelativePosition,c=this._world._layers[a].data,d=b.y/this._world.outputTileHeight|0,e=(b.y+b.height)/this._world.outputTileHeight|0,f=(b.x-b.width/2)/this._world.outputTileWidth|0,g=(b.x+b.width/2)/this._world.outputTileWidth|0,h=[],i=f;g>=i;i++)for(var j=d;e>=j;j++){var k=j*this._world.width+i;h.push(c[k])}return h},Scene.prototype.getBoard=function(){return this._board},Scene.prototype.addObject=function(a,b){this._objects.push(new SceneObject(this,a,b)),this._sortObjects()},Scene.prototype._sortObjects=function(){this._sortedObjects=[];for(var a in this._objects)this._sortedObjects.push(this._objects[a]);this._sortedObjects.sort(function(a,b){return a._zIndex-b._zIndex})},Scene.prototype.draw=function(){this._bgColor&&(ctx.fillStyle=this._bgColor,ctx.fillRect(this._left,this._top,this._width,this._height)),this._bgImage&&ctx.drawImage(this._bgImage,this._left,this._top,this._width,this._height);for(var a=0;a<this._sortedObjects.length;a++)this._sortedObjects[a].draw()},Scene.prototype.attr=function(){return 1===arguments.length?this["_"+arguments[0]]:(this["_"+arguments[0]]=arguments[1],this)},Scene.prototype.remove=function(){for(var a in this._objects)this._objects[a].remove()},Scene.prototype.hide=function(){this._isVivible=!1},Scene.prototype.show=function(){this._isVivible=!0},SceneObject.prototype._setDimensions=function(a){this._left=(a.left||0)+this._scene.attr("left"),this._top=(a.top||0)+this._scene.attr("top"),this._width=a.width||this._scene.attr("width"),this._height=a.height||this._scene.attr("height"),a.alignCenter&&(this._left+=(this._scene.attr("width")-this._width)/2),a.alignVertical&&(this._top+=(this._scene.attr("height")-this._height)/2)},SceneObject.prototype._createActiveObjectFromSelf=function(){this._ao=activeObjects.add({left:this._left,top:this._top,width:this._width,height:this._height,zIndex:this._zIndex,leftClick:this._onClick,onHover:this._onHover,onBlur:this._onBlur,fromCenter:!1})},SceneObject.prototype.draw=function(){var a=extend({},this);if(a._hover&&extend(a,a._hoverStyles),a._bgColor||a._borderWidth>0){ctx.lineWidth=a._borderWidth,ctx.strokeStyle=a._borderColor,ctx.fillStyle=a._bgColor;var b=!!a._bgColor,c=a._borderWidth>0;"rect"===a._shape&&ctx.roundRect(a._left,a._top,a._width,a._height,a._cornerRadius,b,c)}if(a._bgImage){var d=a._scene.getBoard().imgManager.get(a._bgImage);ctx.drawImage(d,a._left,a._top,a._imgWidth,a._imgHeight)}a._text&&(ctx.fillStyle=a._color,ctx.font=a._fontSize+" "+a._fontFamily,ctx.textBaseline=a._textBaseLine,ctx.textAlign=a._textAlign,ctx.fillText(a._text,a._textFromLeft,a._textFromTop))},SceneObject.prototype.remove=function(){this._ao&&this._ao.remove(),delete this._scene[this._objName]},SceneObject.prototype.attr=function(){return 1===arguments.length?this["_"+arguments[0]]:(this["_"+arguments[0]]=arguments[1],this._scene._trigger("dirt"),this)};var styles={tile:{width:160,height:100,alignCenter:!0,top:270,color:"#6bf",textAlign:"center",fontSize:"20px",textBaseline:"middle",textFromTop:50,textFromLeft:80,zIndex:2,cornerRadius:30},tileHover:{bgColor:"#00A",color:"#EEE",borderWidth:4},castleImage:{left:100,top:50,bgImage:"castle-in-clouds",imgWidth:400,imgHeight:390,zIndex:1},title:{left:530,top:150,width:160,zIndex:2,text:"Castle Escape",color:"#6bf",fontSize:"40px",textBaseline:"middle"},sky:{height:430,bgColor:"#05f"},ground:{top:380,height:500,bgColor:"#421"},HOME_author:{alignCenter:!0,width:100,top:700,height:40,color:"#CCC",text:"Maciej Bukowski, 2015"},play:{text:"Play",left:0,extend:"tile"},playHover:{extend:"tileHover"},resume:{left:160,text:"Continue",extend:"tile"},resumeHover:{extend:"tileHover"},credits:{text:"Credits",left:320,extend:"tile"},creditsHover:{extend:"tileHover"},settings:{text:"Settings",left:480,extend:"tile"},settingsHover:{extend:"tileHover"},author:{zIndex:3,top:100,width:400,height:50,alignCenter:!0,text:"Author: Maciej Bukowski",textFromLeft:200,textFromTop:25,fontSize:"30px",color:"#999",textAlign:"center",textBaseline:"middle"},authorHover:{
-color:"red"},bg:{zIndex:2},graphics:{extend:"author",top:200,text:"Graphics:",zIndex:1},menu:{alignVertical:!0,color:"#aaa",left:10,textFromLeft:10,width:200,height:20,fontSize:"16px",bgColor:"white"}},_p=Settings.prototype;_p.getAssignments=function(){return this._assignments},_p.save=function(){var a=JSON.stringify(this._options);localStorage.setItem("Warrior-settings",a)},_p._loadSettingsFromStorage=function(){var a=localStorage.getItem("Warrior-settings")||"{}";this._storageOptions=JSON.parse(a)},_p.get=function(a){return"undefined"==typeof a?this._options:(this._options.hasOwnProperty(a)||console.error("No such property in settings"),this._options[a])},_p.set=function(a,b){this._options.hasOwnProperty(a)?(this._options[a]=b,this._options.AUTO_SAVE&&this.save()):console.error("No such property in settings")},_p.restoreDefault=function(){this._options=shallowCopyTo({},this._defaultOptions),this.save()},User.prototype._setEventListeners=function(){var a=this;window.addEventListener("keydown",function(b){var c=settings.getAssignments(),d=c.getActionFromCode(b.keyCode);d&&(a.actions[d]=!0),a.keys[b.keyCode]=!0}),window.addEventListener("keyup",function(b){var c=settings.getAssignments(),d=c.getActionFromCode(b.keyCode);d&&(a.actions[d]=!1),a.keys[b.keyCode]=!1}),window.addEventListener("blur",function(){a.keys={}})},World.prototype._loadData=function(){var a=this;loadJSON("data/castle.json").then(function(b){a.width=b.width,a.height=b.height,a.outputTileWidth=b.tilewidth,a.outputTileHeight=b.tileheight,a.tileFactor=a.outputTileHeight/a.outputTileWidth,a._layers=b.layers,a._createMapFromImportedData(b.layers);for(var c=0;c<b.tilesets.length;c++)a._tileSets.push(new TileSet(b.tilesets[c]));a._createStaticObjects(b,a),a._trigger("loaded")})},World.prototype._createMapFromImportedData=function(a){this._map=createArray(a.length,this.width,this.width);for(var b=0;b<a.length;b++){var c=a[b].data;if(c)for(var d=this.width,e=0;e<c.length;e++){var f=e%d,g=e/d|0;this._map[b][f][g]=c[e]}}},World.prototype.drawLayers=function(){var a=Math.floor((game._player.x-game._board.width/2)/this.outputTileWidth-1),b=Math.floor((game._player.y-game._board.height/2)/this.outputTileHeight-1),c=Math.ceil((game._player.x+game._board.width/2)/this.outputTileWidth+1),d=Math.ceil((game._player.y+game._board.height/2)/this.outputTileHeight+1);a=Math.max(0,a),b=Math.max(0,b),c=Math.min(this.width,c),d=Math.min(this.height,d);for(var e=0;e<this._layers.length;e++){var f=this._layers[e];if(f.data)for(var g=b;d>g;g++)for(var h=c-1;h>=a;h--){var i=relativate(h*this.outputTileWidth,g*this.outputTileHeight),j=i.x,k=i.y;this._tileSets[0].draw(j,k,f.data[this.width*g+h])}}},World.prototype.drawObjects=function(){this._objectsOnScreen=[],this._objects.sort(function(a,b){return a.y+a.height-(b.y+b.height)===0?a.x-b.x:a.y+a.height-(b.y+b.height)});for(var a=0;a<this._objects.length;a++){this._objectsOnScreen.push(this._objects[a]);var b=this._objects[a];b.draw()}},World.prototype._createStaticObjects=function(a){var b,c=[];for(b=0;b<a.tilesets.length;b++){var d=a.tilesets[b];if(!d.hasOwnProperty("image"))for(var e in d.tiles)c[+e+ +d.firstgid]=d.tiles[e].image}for(b=0;b<a.layers.length;b++){var f=a.layers[b];if(f.objects)for(var g=0;g<f.objects.length;g++){var h=f.objects[g],i=new GameObject(this,{url:c[h.gid],x:h.x,y:h.y-h.height,visible:h.visible,name:h.name});this.addObject(i)}}},World.prototype.addObject=function(a){this._objects.push(a)},TileSet.prototype.load=function(){if(this.image)this.rows=this.imageheight/this.tileheight,this.cols=this.imagewidth/this.tilewidth,this.img=new Image,this.img.src=this.image;else{this.images=[];for(var a in this.tiles){var b=new Image;b.src=this.tiles[a].image,this.images.push(b)}}},TileSet.prototype.draw=function(a,b,c){c-=this.firstgid;var d=c%this.cols*this.tilewidth,e=(c/this.cols|0)*this.tileheight;ctx.drawImage(this.img,d,e,this.tilewidth,this.tileheight,a,b,this.tilewidth,this.tileheight)};
+
+//#### src/js/main.js
+/* global console */
+
+document.addEventListener('init', function() {
+	init();
+});
+
+var canvas,
+	ctx,
+	user,
+	audioManager,
+	settings,
+	game,
+	activeObjects,
+	AORenderer;
+
+function init() {
+	canvas = document.getElementsByTagName('CANVAS')[0];
+	ctx = canvas.getContext('2d');
+	addAdditionalfunctionsToCtx(ctx);
+	activeObjects = new ActiveObjectsManager(canvas);
+	activeObjects.watch();
+	AORenderer = new ActiveObjectsRenderer(ctx, activeObjects);
+	settings = new Settings();
+	audioManager = new AudioManager();
+	user = new User();
+	game = new Game();
+}
+
+//#### src/js/lib/ctxAdditionalMethods.js
+function addAdditionalfunctionsToCtx(ctx) {
+    ctx.roundRect = function (x, y, width, height, radius, fill, stroke) {
+        if (stroke === undefined) 
+            stroke = true;
+        if (!radius) 
+            radius = 5;
+
+        this.beginPath();
+        this.moveTo(x + radius, y);
+        this.lineTo(x + width - radius, y);
+        this.quadraticCurveTo(x + width, y, x + width, y + radius);
+        this.lineTo(x + width, y + height - radius);
+        this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        this.lineTo(x + radius, y + height);
+        this.quadraticCurveTo(x, y + height, x, y + height - radius);
+        this.lineTo(x, y + radius);
+        this.quadraticCurveTo(x, y, x + radius, y);
+        this.closePath();
+        if (stroke) this.stroke();
+        if (fill) this.fill();
+    };
+
+    ctx.circle = function (x, y, radius, fill, stroke) {
+        this.beginPath();
+        if (fill) this.fillStyle = fill;
+        this.arc(x, y, radius, 0, 2 * Math.PI, false);
+        this.fill();
+        if (stroke) {
+            this.strokeStyle = stroke;
+            this.stroke();
+        }
+        return this;
+    };
+    
+    ctx.style = function(o) {
+        extend(ctx, o);
+    };
+    
+    ctx.drawRect = function(x, y, width, height, fill, stroke) {
+        if (fill) this.fillStyle = fill;
+            this.fillRect(x, y, width, height);
+        if(stroke) {
+            this.strokeStyle = stroke;
+            this.strokeRect(x, y, width, height);
+        }
+    };
+
+    ctx.handDrawnText = function (txt, x, y, stroke, fill, isCenter, sound) {
+        var dashLen = 220,
+            dashOffset = dashLen,
+            speed = 15,
+            lineWidth = this.lineWidth = 3,
+            fontSize = 50,
+            font = this.font = fontSize + "px Comic Sans MS, cursive, TSCu_Comic, sans-serif",
+            alpha = 0.2,
+            i = 0,
+            callback = function () { },
+            self = this;
+
+        self.textAlign = 'left';
+        fill = fill || '#000';
+        stroke = stroke || 'rgba(0, 0, 0, 0.5)';
+
+        if (isCenter === true) {
+            x -= (this.measureText(txt).width + lineWidth * txt.length / 2) / 2;
+            console.log(x);
+        }
+        
+        // odgłos pierwszej litery
+        sound && txt[i] !== ' ' && sound.cloneNode().play();
+
+        function getDefault(self) {
+            self.lineWidth = lineWidth;
+            self.textAlign = 'left';
+            self.save();
+            self.font = font;
+            self.lineJoin = "round";
+            self.globalAlpha = alpha;
+            self.textBaseline = "hanging";
+            self.setLineDash([dashLen - dashOffset, dashOffset - speed]);           
+            self.strokeStyle = stroke;
+        }
+
+
+        (function loop() {
+            getDefault(self);
+            dashOffset -= speed;
+            self.strokeText(txt[i], x, y);
+
+            if (dashOffset > 0) requestAnimationFrame(loop);
+            else {
+                
+                self.fillStyle = fill;
+                self.fillText(txt[i], x, y);
+                dashOffset = dashLen;
+                x += self.measureText(txt[i++]).width + lineWidth * Math.random();
+                self.setTransform(1, 0, 0, 1, 0, 4 * Math.random());
+                if (i < txt.length) {
+                    sound && txt[i] !== ' ' && sound.cloneNode().play();
+                    requestAnimationFrame(loop);
+                }
+                else callback();
+            }
+            self.restore();
+        })();
+        return {
+            next: function (fn) {
+                callback = fn;
+            },
+            wait: function (timeout, fn) {
+                callback = function() {
+                    window.setTimeout(fn, timeout);
+                };
+            }
+        };
+    };
+}
+
+//#### src/js/lib/lib.js
+// Vector
+var Vector = function(dx, dy) {
+    this.dx = dx;
+    this.dy = dy;
+
+    this.size = Math.sqrt(dx * dx + dy * dy);
+
+    this.unit = {
+        x: this.dx / this.size,
+        y: this.dy / this.size
+    };
+};
+
+// FPS Counter module
+var fps = (function() {
+    var times = [0];
+    var timeSum = 0;
+    var lastTime = Date.now();
+
+    // Default options
+    var options = {
+        left: 0,
+        top: 0,
+        fontSize: 15,
+        fontFamily: "Verdana",
+        maxLength: 60,
+        fillStyle: 'black',
+        textBaseline: 'top',
+        textAlign: 'left',
+    };
+
+    function draw(ctx, _fps) {
+        var o = options;
+        ctx.textAlign = o.textAlign;
+        ctx.textBaseline = o.textBaseline;
+        ctx.fillStyle = o.fillStyle;
+        ctx.font = o.fontSize + 'px ' + o.fontFamily;
+        ctx.fillText('FPS:' + _fps, o.left, o.top);
+    }
+
+    return {
+        count: function(ctx) {
+            var diff = Date.now() - lastTime;
+            lastTime = Date.now();
+
+            if (times.length > options.maxLength) timeSum -= times.pop();
+            times.unshift(diff);
+            timeSum += diff;
+            var _fps = 1000 / (timeSum / times.length) | 0;
+            draw(ctx, _fps);
+        },
+
+        // changing default options
+        set: function(o) {
+            if (typeof o !== 'object') {
+                throw new Error("Wrong data type");
+            }
+            for (var i in o) {
+                if (options.hasOwnProperty(i)) {
+                    if (o[i] !== undefined) {
+                        options[i] = o[i];
+                    }
+                } else {
+                    throw new Error("Wrong option name");
+                }
+            }
+        }
+    };
+})();
+
+function createArray(length) {
+    var array = new Array(length || 0);
+    var i = length;
+
+    if (arguments.length > 1) {
+        var args = [].slice.call(arguments, 1);
+        while (i--) array[length - 1 - i] = createArray.apply(this, args);
+    }
+    return array;
+}
+
+
+function extend(dest) {
+    var objects = Array.prototype.splice.call(arguments, 1);
+    for (var i = 0; i < objects.length; i++) {
+        var o = objects[i];
+        for (var prop in o) {
+            dest[prop] = o[prop];
+        }
+    }
+    return dest;
+}
+
+
+function loadJSON() {
+    var fail = [],
+        args = [].slice.call(arguments),
+        success = new Array(args.length),
+        onSuccess = null,
+        onFail = null,
+        counter = args.length;
+
+    function count() {
+        if (--counter === 0) {
+            if (fail.length === 0) {
+                onSuccess && onSuccess.apply(this, success);
+            } else onFail && onFail.apply(this, fail);
+        }
+    }
+
+    function getData(request, i) {
+        if (request.status === 200) {
+            // Success
+            var data = request.response;
+            success[i] = data;
+            count();
+        } else 
+            getError(i);
+    }
+
+    function getError(i) {
+        fail.push(args[i]);
+        count();
+    }
+
+    for (var i = 0; i < args.length; i++) {
+        (function(i) {
+            var request = new XMLHttpRequest();
+            request.open('GET', args[i], true);
+            request.send(null);
+            request.responseType = 'json';
+            request.onload = function() {
+                getData(this, i);
+            }
+            request.onerror = function() {
+                getError(i);
+            }
+        }(i));
+    }
+
+    return {
+        then: function(callback) {
+            onSuccess = callback;
+            return this;
+        },
+        fail: function(callback) {
+            onFail = callback;
+            return this;
+        }
+    };
+}
+
+Math.sign = Math.sign || function(x) {
+    return x === 0 ? 0 : x / Math.abs(x);
+};
+
+function RectCollision(o1, o2) {
+    if (o2.x < o1.x + o1.width && o2.y < o1.y + o1.height && o2.x + o2.width > o1.x && o2.y + o2.height > o1.y) {
+        return true;
+    }
+    return false;
+}
+
+
+Array.prototype.includes = Array.prototype.includes || function(x) {
+    return this.indexOf(x) !== -1;
+};
+
+function shallowCopyTo(o1, o2) {
+    for (var name in o2) {
+        if (o2.hasOwnProperty(name)) {
+            o1[name] = o2[name];
+        }
+    }
+    return o1;
+}
+
+//#### src/js/lib/polyfill.js
+Date.now = Date.now || function () {
+    return +new Date();
+};
+
+
+//#### src/js/lib/transitions.js
+function screenToWorld(x, y) {
+    
+}
+
+function worldToScreen(x, y) {
+    
+}
+
+function relativate(x, y) {
+	return {
+		x: Math.floor(x - game._player.x - game._player.width / 2 + game._board.width / 2),
+		y: Math.floor(y - game._player.y - game._player.width / 2 + game._board.height / 2)
+	}
+} 
+
+//#### src/js/classes/ActiveObjectsManager.js
+function ActiveObjectsManager(canvas) {
+    this._canvas = canvas;
+    this._list = [];
+    this._selected = null;
+    this._hover = null;
+    this._mousePos = {
+        x: 0,
+        y: 0
+    }
+}
+
+var _p = ActiveObjectsManager.prototype;
+
+_p.add = function(param) {
+    var ao = new ActiveObject(this, param)
+    this._list.push(ao);
+    return ao;
+};
+
+_p.get = function(x, y) {
+    var z = -Infinity,
+        element = null,
+        list = this._list
+
+    for (var i = 0; i < list.length; i++) {
+        var o = list[i];
+
+        switch (o.shape) {
+            case 'rect':
+                if (o.x <= x && o.x + o.width >= x && o.y <= y && o.y + o.height >= y) {
+                    if (o.zIndex > z) {
+                        element = o;
+                        z = o.zIndex;
+                    }
+                }
+                break;
+            case 'arc':
+                // coś tu nie działa
+                if ((o.x - x) * (o.x - x) + (o.y - y) * (o.y - y) <= o.radius * o.radius) {
+                    if (o.zIndex > z) {
+                        element = o;
+                        z = o.zIndex;
+                    }
+                }
+                break;
+            default:
+                throw new TypeError("Wrong shape");
+        }
+    }
+    return element;
+}
+
+_p.getSelected = function() {
+    return this._selected;
+};
+
+_p.getHover = function() {
+    return this._hover;
+}
+
+_p.getAll = function() {
+    return this._list;
+};
+
+_p.filter = function(fn) {
+    var passedElements = [];
+    for (var i = 0; i < this._list.length; i++) {
+        var ao = this._list[i];
+        var result = fn.call(ao, ao);
+        if (result)
+            passedElements.push(ao);
+    }
+    return passedElements;
+};
+
+_p.each  = function(fn) {
+    for(var i=0; i<this._list.length; i++) {
+        var ao = this._list[i];
+        fn.call(ao, ao);
+    }
+};
+
+_p.remove = function(ao) {
+    var index = this._list.indexOf(ao);
+    this._list.splice(index, 1);
+};
+
+_p.removeAll = function() {
+    this._list.length = 0;
+    this._hover = null;
+};
+
+_p.watch = function() {
+    var self = this;
+    window.addEventListener('mousedown', self._mouseClick.bind(self));
+    this._canvas.addEventListener('mousemove', self._mouseMove.bind(self));
+    this._canvas.addEventListener('mouseleave', self._mouseLeaveCanvas.bind(self));
+};
+
+_p.unwatch = function(canvas) {
+    var self = this;
+    window.removeEventListener('mousedown', self._mouseClick);
+    this._canvas.removeEventListener('mousemove', self._mouseMove);
+    this._canvas.removeEventListener('mouseleave', self._mouseLeaveCanvas);
+};
+
+_p._mouseClick = function(e) {
+    var c = this._getCursorPosition(e);
+    var ao = this.get(c.x, c.y);
+
+    if (e.target.nodeName !== 'CANVAS')
+        return;
+
+    if (e.which === 1) {
+        var aos = this._selected;
+        if (ao != aos)
+            aos && typeof aos.onBlur === 'function' && aos.onBlur();
+
+        ao && typeof ao.leftClick === 'function' && ao.leftClick(e);
+
+        this._selected = ao;
+    } else if (e.which === 3) {
+        if (ao && typeof ao.rightClick === 'function') {
+            ao.rightClick(e);
+        }
+        this._selected = null;
+        return false;
+    }
+};
+
+_p._mouseMove = function(e) {
+    var c = this._getCursorPosition(e);
+   
+    if (this._hover !== this.get(c.x, c.y)) {
+        var previous_AO = this._hover;
+        var ao = this._hover = this.get(c.x, c.y);
+
+        if (previous_AO && typeof previous_AO.onMouseOut === 'function')
+            previous_AO.onMouseOut();
+        
+        if (ao && typeof ao.onHover === 'function')
+            ao.onHover(e);
+
+    }
+    this._mousePos = c;
+};
+
+_p._mouseLeaveCanvas = function(e) {
+    this._hover = null;
+};
+
+_p._getCursorPosition = function(e) {
+    return {
+        x: e.pageX - e.target.offsetLeft,
+        y: e.pageY - e.target.offsetTop
+    };
+};
+
+// CONSTRUCTOR Active Object
+function ActiveObject(manager, o) {
+    this._manager = manager;
+    this._data = {};
+    this._classes = {};
+
+    this._setDimensions(o);
+    this._setEventListeners(o);
+    this._setOffset(o);
+}
+
+var _p = ActiveObject.prototype;
+
+_p._setDimensions = function(o) {
+    this.radius = o.radius;
+    this.width = o.width;
+    this.height = o.height;
+    this.shape = o.shape || 'rect';
+    this.zIndex = o.zIndex || 0;
+};
+
+_p._setEventListeners = function(o) {
+    this.leftClick = o.leftClick || null;
+    this.rightClick = o.rightClick || null;
+    this.onHover = o.onHover || null;
+    this.onBlur = o.onBlur || null;
+    this.onMouseOut = o.onMouseOut || null;
+};
+
+_p._setOffset = function(o) {
+    this.x = o.left || o.x || 0;
+    this.y = o.top || o.y || 0;
+    this.fromCenter = o.fromCenter || false;
+
+    if (!this.fromCenter && this.shape === 'arc') {
+        this.x += this.radius;
+        this.y += this.radius;
+    }
+    if (this.fromCenter && this.shape === 'rect') {
+        this.x -= this.width / 2;
+        this.y -= this.height / 2;
+    }
+};
+
+_p.centerX = function() {
+    return this.x + this.width / 2;
+};
+_p.centerY = function() {
+    return this.y + this.height / 2;
+};
+
+_p.remove = function() {
+    this._manager.remove(this);
+};
+
+_p.data = function() {
+    var args = arguments;
+    switch (args.length) {
+        case 0:
+            return this._data;
+        case 1:
+            if (typeof args[0] === 'object') {
+                for (var propertyName in args[0]) {
+                    var propertyValue = args[0][propertyName];
+                    this._data[propertyName] = propertyValue;
+                }
+            } else {
+                return this._data[args[0]];
+            }
+            break;
+        case 2:
+            this._data[args[0]] = args[1];
+            break;
+        default:
+            throw new Error('Too many arguments');
+    }
+};
+
+_p.addClass = function(className, o) {
+    this._classes[className] = o;
+};
+
+_p.removeClass = function(className) {
+    delete this._classes[className];
+};
+
+_p.getClasses = function() {
+    return this._classes;
+};
+
+//#### src/js/classes/ActiveObjectsRenderer.js
+function ActiveObjectsRenderer(ctx, manager) {
+	this._ctx = ctx;
+	this._AOManager = manager;
+}
+
+var _p = ActiveObjectsRenderer.prototype;
+
+_p.renderAll = function() {
+	var elements = this._AOManager.getAll();
+	for (var i = 0; i < elements.length; i++) {
+		var ao = elements[i];
+		this.renderActiveObject(ao);
+	}
+};
+
+_p.renderActiveObject = function(ao) {
+	var isHover = this._isHover(ao);
+	var classes = ao.getClasses();
+	var aoStyle = extend({}, this._defaultStyle, ao.data());
+
+	isHover && extend(aoStyle, ao.data('hover'));
+
+	for(var className in classes) {
+		var currentClass = classes[className];
+		extend(aoStyle, currentClass);
+	}
+
+	
+	aoStyle.bgColor && this._drawBackground(ao, aoStyle);
+	aoStyle.innerText && this._drawText(ao, aoStyle);
+};
+
+_p._isHover = function(ao) {
+	return ao === this._AOManager.getHover() &&
+		typeof ao.data('hover') != 'undefined';
+};
+
+_p._drawBackground = function(ao, aoStyle) {
+	this._ctx.fillStyle = aoStyle.bgColor;
+	this._ctx.fillRect(ao.x, ao.y, ao.width, ao.height);
+};
+
+_p._drawText = function(ao, aoStyle) {
+	var style = this._defaultStyle;
+	var text = aoStyle.innerText;
+
+	this._ctx.textBaseline = aoStyle.textBaseline;
+	this._ctx.font = aoStyle.textFont;
+	this._ctx.fillStyle = aoStyle.textColor;
+	this._ctx.textAlign = aoStyle.textAlign;
+
+	var textOffsetLeft;
+
+	switch(aoStyle.textAlign) {
+		case 'left':
+			textOffsetLeft = ao.x;
+			break;
+		case 'center':
+			textOffsetLeft = ao.x + ao.width / 2;
+			break;
+		case 'right':
+			textOffsetLeft = ao.x + ao.width;
+			break;
+		default:
+			throw new Error('No such option')
+
+	}
+
+	var textHeight = this._ctx.measureText('M').width;
+	var textOffsetTop = ao.y + (ao.height - textHeight) / 2;
+
+	this._ctx.fillText(text, textOffsetLeft, textOffsetTop);
+};
+
+_p._defaultStyle = {
+	textBaseline: 'hanging',
+	textColor: '#000',
+	textFont: '15px Arial',
+	textAlign: 'center'
+};
+
+_p.renderScene = function(scene) {
+	var elements = this._AOManager.filter(function() {
+		return this.data('scene') === scene;
+	});
+
+	for(var i=0; i<elements.length; i++) {
+		var ao = elements[i];
+		console.log(ao);
+		this.renderActiveObject(ao);
+	}
+}
+
+//#### src/js/classes/Animation.js
+function Animation(options) {
+	extend(this, new EventEmitter);
+	options = options || {};
+	this._size = options.size;
+	this._createFrames(options);
+	this._timeStamp = 0;
+	this._frameIndex = options.startIndex || 0;
+	this._frameLooped = options.frameLooped || false;
+	this._frameDuration = options.frameDuration || 3;
+	this._priorytet = options.priorytet || 0;
+}
+
+var _p = Animation.prototype;
+
+_p.setAudio = function(audio) {
+	this._audio = audio.cloneNode();
+	this._audio.addEventListener('ended', this._onAudioEnded);
+	this._audioLooped = options.audioLooped || false;
+}
+
+_p._onAudioEnded = function () {
+	if (this._audioLooped)
+		this._audio.play();
+	this._trigger('audioEnded');
+}
+
+_p._createFrames = function (options) {
+
+	var offsetLeft = options.offsetLeft || 0;
+	var offsetTop = options.offsetTop || 0;
+	var i;
+
+	this.frames = [];
+	// row direction is default
+	if (options.frameDirection === 'column') {
+		for (i = 0; i < options.size; i++) {
+			this.frames[i] = {
+				width: options.frameWidth,
+				height: options.frameHeight,
+				image: options.image,
+				x: offsetLeft,
+				y: options.frameHeight * i + offsetTop
+			}
+		}
+	} else {
+		for (i = 0; i < options.size; i++) {
+			this.frames[i] = {
+				width: options.frameWidth,
+				height: options.frameHeight,
+				image: options.image,
+				x: options.frameWidth * i + offsetLeft,
+				y: offsetTop
+			}
+		}
+	}
+};
+
+
+_p.setFrameIndex = function (index) {
+	this._frameIndex = index;
+}
+
+_p.getPrirytet = function() {
+	return this._priorytet;
+}
+
+_p.nextFrame = function () {
+	if (this._timeStamp + this._frameDuration < game.getFrameIndex()) {
+		this._timeStamp = game.getFrameIndex();
+		
+		if (this._frameIndex < this._size - 1)
+			this._frameIndex++;
+
+		else {
+			if (this._frameLooped)
+				this._frameIndex = 0;
+			else {
+				this._end = 1;
+				this._trigger('animationEnd')
+			}
+		}
+	}
+}
+
+_p.getCurrentFrame = function () {
+	var frame = this.frames[this._frameIndex];
+	return {
+		image: frame.image,
+		x: frame.x,
+		y: frame.y,
+		width: frame.width,
+		height: frame.height
+	}
+}
+
+//#### src/js/classes/Assignments.js
+function Assignments() {
+	extend(this, new EventEmitter());
+	this._list = {};
+	this._keys = {};
+	this._activeBinding = null;
+	this._setKeyNames();
+	this._setDefaultAssignments();
+	this._loadAssignmentsFromStorage();
+}
+
+Assignments.prototype.getList = function() {
+	return this._list;
+};
+
+Assignments.prototype.getCodeFromAction = function(action) {
+	var keyName = this._list[action];
+	for (var keyCode in this._keys) {
+		if (this._keys[keyCode] === keyName)
+			return keyCode;
+	}
+}
+
+Assignments.prototype.getActionFromCode = function(code) {
+	var keyName = this._keys[code];
+	for(var action in this._list) {
+		if(this._list[action] == keyName) {
+			return action;
+		}
+	}
+}
+
+Assignments.prototype.getKeyName = function(action) {
+	return this._list[action];
+};
+
+Assignments.prototype.setActiveBinding = function(action) {
+	this._activeBinding = action;
+};
+
+Assignments.prototype._setKeyNames = function() {
+	var keys = {
+		8: 'Backspace',
+		9: 'Tab',
+		13: 'Enter',
+		16: 'Shift',
+		17: 'Ctrl',
+		18: 'Alt',
+		19: 'Pause/Break',
+		20: 'Caps lock',
+		27: 'Escape',
+		32: 'Space',
+		33: 'Page up',
+		34: 'Page down',
+		35: 'End',
+		36: 'Home',
+		37: 'Left arrow',
+		38: 'Up arrow',
+		39: 'Right arrow',
+		40: 'Down arrow',
+		45: 'Insert',
+		46: 'Delete',
+		91: 'Left window key',
+		92: 'Right window key',
+		93: 'Select key',
+		144: 'Num lock',
+		145: 'Scroll lock',
+		186: 'Semicolon',
+		187: 'Equal sign',
+		188: 'Comma',
+		189: 'Dash',
+		190: 'Period',
+		191: 'Forward slash',
+		192: 'Grave accent',
+		219: 'Open bracket',
+		220: 'Back slash',
+		221: 'Close bracket',
+		222: "Quote",
+		255: 'Fn'
+	};
+	var i;
+
+	for (i = 48; i <= 57; i++) { // Numbers
+		keys[i] = String.fromCharCode(i);
+	}
+
+	for (i = 65; i <= 90; i++) { // Characters
+		keys[i] = String.fromCharCode(i);
+	}
+
+	for (i = 96; i <= 105; i++) { // Numbers on numpad
+		keys[i] = 'Numpad ' + (i - 96);
+	}
+
+	for (i = 112; i <= 123; i++) { // Special functions
+		keys[i] = 'F' + (i - 111);
+	}
+
+	this._keys = keys;
+};
+
+Assignments.prototype._loadAssignmentsFromStorage = function() {
+	var data = window.localStorage.getItem('Castle_Ecape_Bindings') || '{}';
+	var bindings = JSON.parse(data);
+	for (var action in bindings) {
+		this._list[action] = bindings[action];
+	}
+};
+
+Assignments.prototype.tryBind = function(keyCode) {
+	var key = this._keys[keyCode];
+	for (var action in this._list) {
+		if (action === this._activeBinding) {
+			this._list[action] = key || '';
+			this._removeAssignmentNotFrom(key, action);
+			this._saveAssignmentToStorage();
+			this._trigger('changeAssignnment', action)
+			return true;
+		}
+	}
+};
+
+Assignments.prototype._removeAssignmentNotFrom = function(key, currentCheckingAction) {
+	for (var action in this._list) {
+		if (this._list[action] === key && currentCheckingAction != action) {
+			this._list[action] = '';
+			this._trigger('changeAssignnment', action)
+			break;
+		}
+	}
+};
+
+Assignments.prototype._saveAssignmentToStorage = function() {
+	var data = JSON.stringify(this._list);
+	window.localStorage.setItem('Castle_Ecape_Bindings', data);
+};
+
+Assignments.prototype._setDefaultAssignments = function() {
+	var defaultAssignments = {
+		'Move Left': 'Left arrow',
+		'Move Right': 'Right arrow',
+		'Climb Up': 'Up arrow',
+		'Climb Down': 'Down arrow',
+		'Jump': 'Space',
+		'Attack': 'Alt',
+		'Inventory': 'I',
+		'Settings': 'Escape'
+	};
+
+	for (var action in defaultAssignments) {
+		this._list[action] = defaultAssignments[action];
+		this._trigger('changeAssignnment', action);
+	}
+};
+
+//#### src/js/classes/AudioManager.js
+function AudioManager() {
+	extend(this, new EventEmitter());
+	this._list = {};
+	this._waiting = 0;
+	this._loadSettings();
+	this._setSettingsChangeListener();
+}
+var _p = AudioManager.prototype;
+
+_p.add = function (audioList) {
+	var length  = Object.keys(audioList).length;
+	this._waiting += length;
+
+	for (var name in audioList) {
+		var audio = audioList[name];
+		var HTMLAudio = new Audio();
+		
+		// TODO: Without changing DOM model
+		HTMLAudio.name = name;
+		HTMLAudio.src = audio.src;
+		HTMLAudio.localVolume = audio.volume ? audio.volume / 100 : 1;
+		HTMLAudio.volume = this._globalVolume * HTMLAudio.localVolume;
+
+		if (audio.loop && !audio.once) {
+			HTMLAudio.addEventListener('ended', this.play);
+		}
+		
+		var cpt = this._canplaythrough.bind(this, HTMLAudio, audio, name);
+		HTMLAudio.addEventListener('canplaythrough', cpt);
+		HTMLAudio.onerror = this._onerror;
+
+	}
+	return this;
+};
+
+_p._loadSettings = function() {
+	var settingsAssignments = {
+		'AUDIO_VOLUME': '_globalVolume',
+	}
+	for(var optionName in settingsAssignments) {
+		var prop = settingsAssignments[optionName];
+		var value =  settings.getPropValue(optionName);
+		this[prop] = value;
+	}
+}
+
+_p._setSettingsChangeListener = function() {
+	
+	var actionAssignments = {
+		'AUDIO_VOLUME': '_changeGlobalVolume',
+	};
+	
+	settings._addEventListener('change', function(optionName, value) {
+		var method = actionAssignments[optionName];
+		
+		this[method].call(this, value);
+	}.bind(this));
+}
+
+_p._canplaythrough = function (HTMLAudio, audio, name) {
+	this._list[name] = HTMLAudio;
+	this._loaded();
+};
+
+_p._onerror = function(audio) {
+	console.error('Cannot load this file: ' + audio.src);
+	this._loaded();
+}
+
+_p.get = function(audioName) {
+	if(audioName in this._list)
+		return this._list[audioName];
+	else
+		console.error('Missing audio file: ' + audioName);
+};
+
+_p._loaded = function() {
+	console.log(this._waiting);
+	this._waiting--;
+	if(this._waiting === 0)
+		this._trigger('audioLoaded');
+};
+
+_p._changeGlobalVolume = function (volume) {
+	this._globalVolume = volume;
+	for (var a in this._list) {
+		this._list[a].volume = this._list[a].localVolume * volume;
+	}
+};
+
+function BgAudio() {
+	this._bgAudio = null;
+}
+
+BgAudio.prototype._setBgAudio = function(audioName) {
+
+	if(this._bgAudio) {
+		if(this._bgAudio.name === audioName)
+			return;
+		this._bgAudio.pause();
+	} 
+	try {
+		this._bgAudio = audioManager.get(audioName);
+		this._bgAudio.currentTime = 0;
+		this._bgAudio.play();
+	} catch(err) {
+		console.error(err);
+	}
+}
+
+//#### src/js/classes/Board.js
+function Board() {
+	this._scenes = [];
+	extend(this, new EventEmitter());
+	this.imgManager = new ImageManager();
+	this.width = window.innerWidth;
+	this.height = window.innerHeight;
+	this.resize();
+
+	var self = this;
+
+	this.imgManager.add({
+		'castle-in-clouds': './img/castle-in-clouds.png'
+	})._addEventListener('loaded', function() {
+		self.redrawScenes();
+	});
+}
+
+Board.prototype.resize = function() {
+	var self = this;
+
+	function resize() {
+
+		self.width = canvas.width = document.documentElement.clientWidth || document.body.clientWidth;
+		self.height = canvas.height = document.documentElement.clientHeight || document.body.clientHeight;
+		self.redrawScenes();
+	}
+	window.addEventListener('resize', resize);
+	resize();
+};
+
+Board.prototype.clear = function() {
+	ctx.fillStyle = '#000';
+	ctx.fillRect(0, 0, this.width, this.height);
+};
+
+Board.prototype.drawScenes = function() {
+	for (var i = 0; i < this._scenes.length; i++) {
+		this._scenes[i].draw();
+	}
+};
+
+Board.prototype.redrawScenes = function() {
+	ctx.clearRect(0, 0, this.width, this.height);
+	this.drawScenes();
+}
+
+Board.prototype._addScene = function(scene) {
+	var self = this;
+	this._scenes.push(scene);
+	this._scenes.sort(function(s1, s2) {
+		return s1.zIndex - s2.zIndex;
+	});
+	scene._addEventListener('dirt', self.redrawScenes.bind(self));
+	this.redrawScenes();
+};
+
+Board.prototype._removeScene = function(scene) {
+	scene.remove();
+	this._scenes.splice(this._scenes.indexOf(scene));
+	this.redrawScenes();
+};
+
+Board.prototype.removeScenes = function(scene) {
+	for (var i = 0; i < this._scenes.length; i++) {
+		this._scenes[i].remove();
+	}
+	this._scenes.length = 0;
+	console.log(this._scenes);
+}
+
+Board.prototype.createWelcomeScene = function() {
+	this._addScene(new Scene(this, {
+		objects: {
+			castleImage: {},
+			title: {},
+			sky: {},
+			ground: {},
+			HOME_author: {},
+			play: {
+				onClick: function() {
+					location.hash = 'play';
+				}
+			},
+			resume: {
+				onClick: function() {
+					location.hash = 'continue';
+				}
+			},
+			credits: {
+				onClick: function() {
+					location.hash = 'credits';
+				},
+			},
+			settings: {
+				onClick: function() {
+					location.hash = 'settings';
+				}
+			}
+		}
+	}));
+};
+
+
+Board.prototype.createSettingsScene = function() {
+
+	var xhr2 = new XMLHttpRequest();
+	xhr2.onload = function() {
+		var style = $('style')[0];
+		style.innerHTML = this.response;
+		style.id = 'settings-style'
+		document.head.appendChild(style);
+	}
+	xhr2.open('GET', './html/settings/style.css');
+	xhr2.send();
+
+
+	var xhr = new XMLHttpRequest();
+	xhr.onload = function() {
+		var html = this.response;
+		var settingsGUI = new SettingsGUI(html);
+	}
+	xhr.open("GET", 'html/settings/index.html');
+	xhr.send();
+};
+
+Board.prototype.createCreditsScene = function() {
+	this._addScene(new Scene(this, {
+		bgColor: '#000',
+		zIndex: 6,
+		objects: {
+			bg: {
+				onClick: function() {
+					location.hash = '';
+				}
+			},
+			author: {
+				onClick: function() {
+					location.href = 'http://www.google.com'
+				}
+			},
+			graphics: {
+
+			}
+		}
+	}));
+};
+
+//#### src/js/classes/DocumentQuery.js
+function DocumentQuery() {
+	var elements = [];
+	if(typeof arguments[0] == 'object') {
+		for (var i = 0; i < arguments.length; i++) {
+			var arg = arguments[i];
+
+			if(arg.length)
+				for(var j =0; j<arg.length; j++) {
+					elements = elements.concat(arg[j]);
+				}
+			else
+				elements = elements.concat(arg);
+		}
+		return new DocumentObjectsManager(elements);
+	}
+	else {
+		var element = document.createElement(arguments[0]);
+		return new DocumentObjectsManager([element]);
+	}
+}
+
+var $ = DocumentQuery;
+
+function DocumentObjectsManager(elements) {
+	for(var i=0; i<elements.length; i++) {
+		this[i] = elements[i];
+	}
+	this._elements = elements;
+}
+
+var _p = DocumentObjectsManager.prototype;
+
+_p.valueOf = function() {
+	return this._elements;
+}
+
+_p._each = function (fn) {
+	for (var i = 0; i < this._elements.length; i++) {
+		var el = this._elements[i];
+		fn.call(el, el);
+	}
+}
+
+_p.addClass = function (someClass) {
+	this._each(function (el) {
+		el.className += el.className ? " " + someClass : someClass;
+	});
+	return this;
+};
+
+_p.removeClass = function (someClass) {
+	this._each(function (el) {
+		var regexp = new RegExp('\\s*' + someClass + '\\s*', 'g');
+		el.className = el.className.replace(regexp, ' ');
+	});
+	return this;
+};
+
+_p.hasClass = function (someClass) {
+	var el = this._elements[0];
+	var regexp = new RegExp(someClass, 'g');
+	return regexp.test(el.className);
+};
+
+_p.hide = function (ms, callback) {
+	var self = this;
+	this._each(function (el) {
+		var delta = ms ? 30 / ms : 0.04;
+		var opacity = el.style.opacity === "" ? 1 : parseFloat(el.style.opacity);
+		el.style.opacity = Math.max(0, opacity - delta);
+		if (el.style.opacity > 0) {
+			window.setTimeout(self.hide.bind(self, ms, callback), 30);
+		}
+		else
+			callback && callback();
+	});
+	return this;
+};
+
+_p.show = function (el, ms, callback) {
+	var self = this;
+	this._each(function (el) {
+		var delta = ms ? 30 / ms : 0.04;
+		var opacity = el.style.opacity === "" ? 1 : parseFloat(el.style.opacity);
+		//debugger;
+		el.style.opacity = Math.min(1, opacity + delta);
+		if (el.style.opacity < 1)
+			window.setTimeout(self.show.bind(self, ms, callback), 30);
+		else
+			callback && callback();
+	});
+	return this;
+};
+
+_p.html = function(html) {
+	this._each(function (el) {
+		el.innerHTML = html;
+	});
+	return this;
+}
+
+_p.remove = function() {
+	this._each(function (el) {
+		el.outerHTML = '';
+	});
+}
+
+//#### src/js/classes/EventEmitter.js
+function EventEmitter () {
+	this._events = {};
+}
+
+EventEmitter.prototype._addEventListener = function(eventType, eventHandler) {
+	if (!this._events[eventType])
+		this._events[eventType] = [];
+	if (typeof eventHandler !== 'function')
+		console.error('eventHandler must be a function');
+	this._events[eventType].push(eventHandler.bind(this));
+};
+
+EventEmitter.prototype._trigger = function(eventType) {
+	var events = this._events[eventType]
+	if (!events)
+		return;
+	var args = Array.prototype.slice.call(arguments, 1);
+	for (var i = 0; i < events.length; i++) {
+		events[i].apply(this, args);
+	}
+	// this._events[eventType].length = 0;
+};
+
+EventEmitter.prototype._removeEventListener = function(eventType, eventHandler) {
+	if (typeof this._events[eventType] === 'undefined')
+		return;
+
+	var index = this._events[eventType].indexOf(eventHandler);
+	console.log(eventHandler, this._events);
+	if (index === -1)
+		return;
+
+	return this;
+};
+
+EventEmitter.prototype._dispatch = function(eventType) {
+	if(eventType in this._events)
+		this._events[eventType].length = 0;
+};
+
+EventEmitter.prototype._getEventListeners = function(eventType) {
+	return this._events[eventType];
+}
+
+
+
+function Timeline() {
+	this._timeEvents = {};
+    this._frame = 0;
+}
+Timeline.prototype.getCurrentFrameIndex = function() {
+	return this._frame;
+}
+Timeline.prototype.addEvent = function(_frame, eventCallback, self) {
+	_frame += this._frame;
+    if (!this._timeEvents[_frame]) this._timeEvents[_frame] = [];
+    this._timeEvents[_frame].push(eventCallback.bind(self));
+};
+Timeline.prototype.showEvents = function() {
+	return this._timeEvents;
+}
+Timeline.prototype.check = function () {
+    var events = this._timeEvents[this._frame]; // frame events
+    if (events) {
+        for (var i = 0; i < events.length; i++) {
+            events[i].call(this);
+        }
+        delete this._timeEvents[this._frame];
+    }
+};
+Timeline.prototype.getFrameIndex = function() {
+	return this._frame;
+}
+
+//#### src/js/classes/Game.js
+function Game() {
+	BgAudio.call(this);
+	extend(this, new EventEmitter());
+	this._board = new Board();
+	this._loadAudio();
+}
+
+extend(Game.prototype, BgAudio.prototype);
+
+Game.prototype._loadAudio = function(callback) {
+	var self = this;
+	loadJSON('data/audio.json').then(function(music) {
+		// audio
+		audioManager.add(music);
+		audioManager._addEventListener('audioLoaded', self.onAudioLoaded.bind(self));
+	});
+};
+
+Game.prototype.onAudioLoaded = function() {
+	console.log(audioManager._list);
+	this._setNavigation();
+}
+
+Game.prototype.play = function() {
+	extend(this, new Timeline());
+	this._pause = false;
+	this._world = new World(this);
+	var self = this;
+	self._setBgAudio('game-music');
+	this._world._addEventListener('loaded', function() {
+		self._player = new Player(this);
+		self._nextFrame();
+	});
+}
+
+Game.prototype.pause = function() {
+	this._pause = true;
+	this._bgAudio && this._bgAudio.pause();
+}
+
+Game.prototype.resume = function() {
+	this._pause = false;
+	this._nextFrame();
+	this._bgAudio && this._bgAudio.play();
+}
+
+
+Game.prototype._nextFrame = function() {
+
+	try {
+		this._frame++;
+
+		this.check();
+
+		this._player.move();
+
+		this._board.clear();
+		this._world.drawLayers();
+		this._world.drawObjects();
+
+		this._board.drawScenes();
+
+		fps.count(ctx);
+
+		if (!this._pause)
+			window.requestAnimationFrame(this._nextFrame.bind(this));
+
+	} catch (err) {
+		console.log(err);
+	}
+};
+
+Game.prototype.goToStartPage = function() {
+	this._setBgAudio('start-music');
+	this._board.createWelcomeScene();
+}
+
+Game.prototype.goToCreditsPage = function() {
+	this._setBgAudio('start-music');
+	this._board.createCreditsScene();
+}
+
+Game.prototype.goToSettingsPage = function() {
+	this._setBgAudio('start-music');
+	this._board.createSettingsScene();
+}
+
+Game.prototype._setNavigation = function() {
+	var self = this;
+
+	function hashChange(e) {
+		if (e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+		self._pause = true;
+		self._board.removeScenes();
+
+		activeObjects.removeAll();
+
+		var hash = location.hash.length === 0 ? '' : location.hash.slice(1);
+		switch (hash) {
+			case 'play':
+				self.play();
+				break;
+			case '':
+				self.goToStartPage();
+				break;
+			case 'credits':
+				self.goToCreditsPage();
+				break;
+			case 'resume': 
+				break;
+			case 'settings':
+				self.goToSettingsPage();
+				break;
+			default:
+				console.error(hash);
+				break;
+		}
+	}
+	window.addEventListener('hashchange', hashChange);
+	hashChange(); // trigger;
+}
+
+//#### src/js/classes/GameObject.js
+function GameObject(_world, properties) {
+	extend(this, new EventEmitter());
+	switch (properties.name) {
+		default:
+			break;
+	}
+	extend(this, properties);
+}
+
+GameObject.prototype.draw = function() {
+	var animation = this.animations[this.currentAnimationName];
+	
+	var relPos = relativate(this.x, this.y);
+	
+	var frame = animation.getCurrentFrame();
+	
+	ctx.drawImage(frame.image, 
+		frame.x, frame.y, frame.width, frame.height, 
+		relPos.x, relPos.y, frame.width, frame.height);
+}
+
+//#### src/js/classes/ImageManager.js
+function ImageManager() {
+	extend(this, new EventEmitter());
+	this._counter = 0;
+	this._list = {};
+}
+
+var _p = ImageManager.prototype;
+
+_p.add = function(o) {
+
+	for(var imgName in o) {
+		this._counter++;
+
+		var img = this._list[imgName] = new Image();
+		img.src = o[imgName];
+		img.onload = this._onload.bind(this, imgName, img.src);
+		img.onerror = this._onerror.bind(this, imgName, img.src);
+	}
+	return this;
+}
+
+_p._onload = function() {
+	this._count();
+}
+
+_p._onerror = function(imgName, imgSrc) {
+	this._trigger('error');
+	console.error(imgName, imgSrc);
+	this._count();
+}
+
+_p._count = function() {
+	this._counter--;
+	if(this._counter === 0)
+		this._trigger('loaded');
+}
+
+_p.get = function(imgName) {
+	return this._list[imgName];
+}
+
+//#### src/js/classes/Player.js
+function Player(world) {
+	var self = this;
+	this._world = world;
+	this.x = 1265;
+	this.y = 2140;
+	this.Vy = 0;
+	this.width = 48;
+	this.height = 92;
+	this.speed = 7;
+	this.shadowRelativePosition = {
+		get x() { return self.x + 23 },
+		get y() { return self.y + 15 },
+		get width() { return 20 },
+		get height() { return 67 },
+	};
+	this.jumpHeight = 20;
+	this.isOnLadder = false;
+
+	// this.audio = audioManager['road'];
+	extend(this, new EventEmitter());
+	
+	// Get prototype functions of GameObject
+	extend(this, GameObject.prototype);
+
+	this._setAnimation();
+}
+var _p = Player.prototype;
+
+_p._setAnimation = function() {
+
+	this.frameSets = [
+		"moveDown",
+		"moveDownLeft",
+		"moveLeft",
+		"moveUpLeft",
+		"moveUp",
+		"moveUpRight",
+		"moveRight",
+		"moveDownRight"
+	];
+
+	var self = this;
+	var frameDuration = 3;
+	var frameWidth = 48;
+	var frameHeight = 92;
+	var size = 9;
+
+	this.animations = {};
+	this.currentAnimationName = this.frameSets[0];
+	this.ready = false;
+	this.image = new Image();
+	this.image.src = "img/walk-cycle.png";
+
+	this.image.addEventListener('load', function () {
+		self.frameSets.forEach(function (animationName, index) {
+			self.animations[animationName] = new Animation({
+				image: self.image,
+				frameWidth: frameWidth,
+				frameHeight: frameHeight,
+				size: size,
+				frameLooped: true,
+				offsetTop: frameHeight * index,
+				frameDuration: frameDuration
+			})
+		});
+		self.ready = true;
+		self._world.addObject(self);
+	});
+}
+
+_p.animate = function (animationName) {
+	if (this.ready) {
+		if (this.currentAnimationName === animationName)
+			this.animations[animationName].nextFrame();
+		else {
+			this.currentAnimationName = animationName;
+			this.animations[animationName].nextFrame();
+		}
+	}
+}
+
+_p.move = function () {
+	var dirX = 0;
+	var dirY = 0;
+
+	if (user.actions['Climb Up']) dirY--;
+	if (user.actions['Climb Down']) dirY++;
+	if (user.actions['Move Left']) dirX--;
+	if (user.actions['Move Right']) dirX++;
+
+	var tryingJump = (user.actions.Jump) ? true : false;
+
+	var ladderId = 3;
+
+	var tiles = this.getTilesFromCollisionWithLayer(0);
+
+	if(this.isOnLadder && tiles.indexOf(ladderId) !== -1 && tryingJump)
+		this._jumpFromLadder();
+
+	else if ((dirY !== 0 || this.isOnLadder) && tiles.indexOf(ladderId) !== -1)
+		this._moveOnLdder(dirY, ladderId);
+
+	else 
+		this._moveOnGroundOrTryFall(tryingJump);
+
+	if (dirX !== 0) 
+		this._moveAside(dirX);
+};
+
+_p._moveOnGroundOrTryFall = function(tryingJump) {
+	this.isOnLadder = false;
+	this.Vy++;
+	this.y += this.Vy;
+
+	var col = this.isInCollisionWithLayer(1);
+	if (col) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
+
+		tryingJump && this._jumpFromGround();
+	}
+}
+
+_p._jumpFromLadder = function() {
+	this.isOnLadder = false;
+	this.Vy = -this.jumpHeight;
+	this.y += this.Vy;
+	if (this.isInCollisionWithLayer(1)) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
+	}
+};
+
+_p._jumpFromGround = function() {
+	this.Vy -= this.jumpHeight;
+	this.y += this.Vy;
+	if (this.isInCollisionWithLayer(1)) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
+	}
+};
+
+_p._moveAside = function(dirX) {
+	this.x += this.speed * dirX;
+	if (this.isInCollisionWithLayer(1))
+		while (this.isInCollisionWithLayer(1))
+			this.x -= dirX;
+	else if (dirX === 1)
+		this.animate('moveRight')
+	else if (dirX === -1)
+		this.animate('moveLeft')
+};
+
+_p._moveOnLdder = function(dirY, ladderId) {
+	this.isOnLadder = true;
+	this.Vy = 0;
+	this.y += this.speed * dirY;
+	if (this.isInCollisionWithLayer(1) || (!this.getTilesFromCollisionWithLayer(0).includes(ladderId) && dirY === -1)) {
+		while (this.isInCollisionWithLayer(1) || !this.getTilesFromCollisionWithLayer(0).includes(ladderId))
+			this.y -= dirY;
+	} else if (dirY !== 0)
+		this.animate('moveUp');
+};
+
+_p.isInCollisionWithLayer = function (layerIndex) {
+	var shadow = this.shadowRelativePosition;
+	var layer = this._world._layers[layerIndex].data;
+	var y1 = shadow.y / this._world.outputTileHeight | 0;
+	var y2 = (shadow.y + shadow.height) / this._world.outputTileHeight | 0;
+	var x1 = (shadow.x - shadow.width / 2) / this._world.outputTileWidth | 0;
+	var x2 = (shadow.x + shadow.width / 2) / this._world.outputTileWidth | 0;
+
+	for (var i = x1; i <= x2; i++) {
+		for (var j = y1; j <= y2; j++) {
+			var index = j * this._world.width + i;
+			if (layer[index] !== 0)
+				return true;
+		}
+	}
+	return false;
+};
+
+_p.getTilesFromCollisionWithLayer = function (layerIndex) {
+	var shadow = this.shadowRelativePosition;
+	var layer = this._world._layers[layerIndex].data;
+	var y1 = shadow.y / this._world.outputTileHeight | 0;
+	var y2 = (shadow.y + shadow.height) / this._world.outputTileHeight | 0;
+	var x1 = (shadow.x - shadow.width / 2) / this._world.outputTileWidth | 0;
+	var x2 = (shadow.x + shadow.width / 2) / this._world.outputTileWidth | 0;
+
+	var array = [];
+	for (var i = x1; i <= x2; i++) {
+		for (var j = y1; j <= y2; j++) {
+			var index = j * this._world.width + i;
+			array.push(layer[index]);
+		}
+	}
+	return array;
+};
+
+//#### src/js/classes/Scene.js
+function Scene(board, o) {
+	extend(this, new EventEmitter());
+	this._board = board;
+
+	this._isVivible = !!o.isVivible;
+	this._zIndex = o.zIndex || 0;
+
+	this._setDimensions(board, o);
+	this._setOffset(board, o);
+
+	this._bgColor = o.bgColor || null;
+	if (o.bgImage)
+		this._bgImage = board.imgManager[o.bgImage];
+
+	this._objects = {};
+	this._sortedObjects = [];
+
+	for (var objName in o.objects) {
+		this._objects[objName] = new SceneObject(this, objName, o.objects[objName]);
+	}
+	this._sortObjects();
+}
+
+Scene.prototype._setDimensions = function(board, o) {
+	this._height = o.height || board.height;
+	this._width = o.width || board.width;
+};
+
+Scene.prototype._setOffset = function(board, o) {
+	this._left = o.left || board.width - o.right || 0;
+	this._top = o.top || board.width - o.bottom || 0;
+
+	if (o.alignCenter)
+		this._left = (board.width - this._width) / 2;
+	if (o.alignVertical)
+		this._top = (board.height - this._height) / 2;
+}
+
+Scene.prototype.getBoard = function() {
+	return this._board;
+};
+
+Scene.prototype.addObject = function(objName, o) {
+	this._objects.push(new SceneObject(this, objName, o));
+	this._sortObjects();
+};
+
+Scene.prototype._sortObjects = function() {
+	this._sortedObjects = [];
+	for (var objName in this._objects) {
+		this._sortedObjects.push(this._objects[objName]);
+	}
+	this._sortedObjects.sort(function(o1, o2) {
+		return o1._zIndex - o2._zIndex;
+	});
+};
+
+Scene.prototype.draw = function() {
+	if (this._bgColor) {
+		ctx.fillStyle = this._bgColor;
+		ctx.fillRect(this._left, this._top, this._width, this._height);
+	}
+	if (this._bgImage)
+		ctx.drawImage(this._bgImage, this._left, this._top, this._width, this._height);
+	for (var i = 0; i < this._sortedObjects.length; i++) {
+		this._sortedObjects[i].draw();
+	}
+};
+
+Scene.prototype.attr = function() {
+	if (arguments.length === 1)
+		return this['_' + arguments[0]];
+	else {
+		this['_' + arguments[0]] = arguments[1];
+		return this;
+	}
+};
+
+Scene.prototype.remove = function() {
+	for (var objName in this._objects) {
+		this._objects[objName].remove();
+	}
+};
+
+Scene.prototype.hide = function() {
+	this._isVivible = false;
+};
+
+Scene.prototype.show = function() {
+	this._isVivible = true;
+}
+
+function SceneObject(_scene, _objName, o) {
+	var self = this;
+	this._scene = _scene;
+	this._objName = _objName;
+	this._hoverStyles = {};
+
+	function ext(class_name) {
+		if (class_name in styles) {
+			for (var prop in styles[class_name]) {
+				if (prop === 'extend')
+					ext(styles[class_name].extend);
+				else
+					o[prop] = styles[class_name][prop];
+			}
+		}
+	}
+	ext(_objName);
+
+	function extHover(class_name) {
+		if (class_name in styles) {
+			for (var prop in styles[class_name]) {
+				if (prop === 'extend')
+					extHover(styles[class_name].extend);
+				else
+					self._hoverStyles['_' + prop] = styles[class_name][prop];
+			}
+		}
+	}
+
+	if (_objName + 'Hover' in styles || o.onHover || o.onBlur) {
+
+		extHover(_objName + 'Hover')
+		console.log(this, this._hoverStyles);
+
+		this._onHover = function() {
+			o.onHover && o.onHover.call(self);
+			self._hover = true;
+			self._scene._trigger('dirt');
+		}
+		this._onBlur = function() {
+			o.onBlur && o.onBlur.call(self);
+			self._hover = false;
+			self._scene._trigger('dirt');
+		}
+	}
+
+	this._setDimensions(o);
+
+	this._shape = o.shape || 'rect';
+	this._cornerRadius = o.cornerRadius || 0;
+	this._bgColor = o.bgColor || '';
+	this._borderWidth = o.borderWidth || 0;
+	this._borderColor = o.color || o.borderColor || 'black';
+
+	this._setBgImage(o);
+
+
+	this._zIndex = (o.zIndex || 0) + this._scene.attr('zIndex');
+
+	this._setText(o);
+
+	this._onClick = o.onClick && o.onClick.bind(this) || null;
+
+	this._createActiveObjectFromSelf();
+}
+
+var _p = SceneObject.prototype;
+
+_p._setBgImage = function(o) {
+	if (!o.bgImage)
+		return;
+
+	this._bgImage = o.bgImage;
+	this._imgWidth = o.imgWidth || o.bgImage.width;
+	this._imgHeight = o.imgHeight || o.bgImage.height;
+}
+
+
+_p._setDimensions = function(o) {
+	this._left = (o.left || 0) + this._scene.attr('left');
+	this._top = (o.top || 0) + this._scene.attr('top')
+	this._width = o.width || this._scene.attr('width');
+	this._height = o.height || this._scene.attr('height');
+	if (o.alignCenter) {
+		this._left += (this._scene.attr('width') - this._width) / 2;
+	}
+	if (o.alignVertical)
+		this._top += (this._scene.attr('height') - this._height) / 2;
+};
+
+_p._setText = function(o) {
+	this._text = o.text || '';
+	if (!this._text)
+		return;
+
+	this._textFromLeft = (o.textFromLeft || 0) + this._left;
+	this._textFromTop = (o.textFromTop || 0) + this._top;
+
+	this._color = o.color || '#000';
+	this._fontSize = o.fontSize || '12px';
+	this._textBaseLine = o.textBaseline || 'top';
+	this._fontFamily = o.fontFamily || 'Arial';
+	this._textAlign = o.textAlign || 'left';
+};
+
+
+
+_p._createActiveObjectFromSelf = function() {
+	this._ao = activeObjects.add({
+		left: this._left,
+		top: this._top,
+		width: this._width,
+		height: this._height,
+		zIndex: this._zIndex,
+		leftClick: this._onClick,
+		onHover: this._onHover,
+		onBlur: this._onBlur,
+		fromCenter: false
+	});
+};
+
+_p.draw = function() {
+	var o = extend({}, this);
+	if (o._hover) {
+		extend(o, o._hoverStyles);
+	}
+
+	if (o._bgColor || o._borderWidth > 0) {
+		ctx.lineWidth = o._borderWidth;
+		ctx.strokeStyle = o._borderColor;
+		ctx.fillStyle = o._bgColor;
+
+		var isFill = !!o._bgColor;
+		var isStroke = (o._borderWidth > 0);
+
+		if (o._shape === 'rect') {
+			ctx.roundRect(o._left, o._top, o._width, o._height, o._cornerRadius, isFill, isStroke)
+		}
+	}
+	if (o._bgImage) {
+		var img = o._scene.getBoard().imgManager.get(o._bgImage);
+		ctx.drawImage(img, o._left, o._top, o._imgWidth, o._imgHeight);
+	}
+
+	if (o._text) {
+		ctx.fillStyle = o._color;
+		ctx.font = o._fontSize + ' ' + o._fontFamily;
+		ctx.textBaseline = o._textBaseLine;
+		ctx.textAlign = o._textAlign;
+		ctx.fillText(o._text, o._textFromLeft, o._textFromTop)
+	}
+};
+
+_p.remove = function() {
+	this._ao && this._ao.remove();
+	delete this._scene[this._objName];
+};
+
+_p.attr = function() {
+	if (arguments.length === 1)
+		return this['_' + arguments[0]];
+	else {
+		this['_' + arguments[0]] = arguments[1];
+		this._scene._trigger('dirt');
+		return this;
+	}
+};
+
+var styles = {
+
+	// Main Page
+	tile: {
+		width: 160,
+		height: 100,
+		alignCenter: true,
+		top: 430 - 160,
+		color: '#6bf',
+		textAlign: 'center',
+		fontSize: '20px',
+		textBaseline: 'middle',
+		textFromTop: 100 / 2,
+		textFromLeft: 160 / 2,
+		zIndex: 2,
+		cornerRadius: 30,
+	},
+	tileHover: {
+		bgColor: '#00A',
+		color: '#EEE',
+		borderWidth: 4
+	},
+	castleImage: {
+		left: 100,
+		top: 50,
+		bgImage: 'castle-in-clouds',
+		imgWidth: 400,
+		imgHeight: 390,
+		zIndex: 1
+	},
+	title: {
+		left: 530,
+		top: 150,
+		width: 160,
+		zIndex: 2,
+		text: 'Castle Escape',
+		color: '#6bf',
+		fontSize: '40px',
+		textBaseline: 'middle'
+	},
+	sky: {
+		height: 430,
+		bgColor: '#05f'
+	},
+	ground: {
+		top: 380,
+		height: 500,
+		bgColor: '#421'
+	},
+	HOME_author: {
+		alignCenter: true,
+		width: 100,
+		top: 700,
+		height: 40,
+		color: '#CCC',
+		text: "Maciej Bukowski, 2015"
+	},
+	play: {
+		text: 'Play',
+		left: 0,
+		extend: 'tile'
+	},
+	playHover: {
+		extend: 'tileHover'
+	},
+	resume: {
+		left: 160,
+		text: 'Continue',
+		extend: 'tile'
+	},
+	resumeHover: {
+		extend: 'tileHover'
+	},
+	credits: {
+		text: 'Credits',
+		left: 320,
+		extend: 'tile'
+	},
+	creditsHover: {
+		extend: 'tileHover'
+	},
+	settings: {
+		text: 'Settings',
+		left: 480,
+		extend: 'tile'
+	},
+	settingsHover: {
+		extend: 'tileHover'
+	},
+
+
+	// Credits
+	author: {
+		zIndex: 3,
+		top: 100,
+		width: 400,
+		height: 50,
+		alignCenter: true,
+		text: "Author: Maciej Bukowski",
+		textFromLeft: 200,
+		textFromTop: 25,
+		fontSize: "30px",
+		color: "#999",
+		textAlign: "center",
+		textBaseline: "middle"
+	},
+
+	authorHover: {
+		color: 'red',
+	},
+
+	bg: {
+		zIndex: 2,
+	},
+	graphics: {
+		extend: 'author',
+		top: 200,
+		text: 'Graphics:',
+		zIndex: 1
+	},
+};
+
+//#### src/js/classes/Settings.js
+function Settings() {
+	extend(this, new EventEmitter());
+	this._options = {};
+	this._storageOptions = {};
+	this.setDefaultOptions();
+	this._assignments = new Assignments();
+	this._loadSettingsFromStorage();
+}
+
+var _p = Settings.prototype;
+
+_p.setDefaultOptions = function () {
+	// Can be stored in external JSON file
+	var options = this._options = {
+		AUDIO_VOLUME: {
+			value: 1,	
+			valueType: 'number',
+			settingsType: 'audio',
+			inputType: 'range',
+			minValue: 0,
+			maxValue: 1,
+			step: 0.1
+		}
+	};
+
+	(function createNiceNames() {
+		for (var propName in options) {
+			var o = options[propName];
+			o.niceName = propName.replace('_', ' ').toLowerCase();
+			o.niceName = propName[0] + o.niceName.substr(1);
+		}
+	})();
+};
+
+_p.getAssignments = function () {
+	return this._assignments;
+};
+
+_p.save = function () {
+	var values = {};
+	for (var propName in this._options) {
+		values[propName] = this._options[propName].value;
+	};
+
+	var data = JSON.stringify(values);
+	localStorage.setItem('Warrior-settings', data);
+};
+
+_p._loadSettingsFromStorage = function () {
+	var data = localStorage.getItem('Warrior-settings') || '{}';
+	var storageOptions = JSON.parse(data);
+
+	for (var propName in storageOptions) {
+		this._options[propName].value = storageOptions[propName];
+	}
+};
+
+_p.getPropValue = function (property) {
+	console.log(property);
+	return this._options[property].value;
+};
+
+_p.getAll = function () {
+	return this._options;
+};
+
+_p.setPropValue = function (property, value) {
+	console.log(property, value)
+	var op = this._options[property];
+	console.log(op);
+	if (op.valueType === 'number')
+		value = Number(value);
+
+	if (op.valueType === 'boolean') {
+	console.log(value);
+		
+		value = (value === 'true' || value === true || value === 1 || value === '1');
+	console.log(value);
+	
+	}
+
+	this._options[property].value = value;
+	this.save();
+	this._trigger('change', property, value);
+};
+
+//#### src/js/classes/SettingsGUI.js
+function SettingsGUI(html) {
+	this._div = $('div').html(html)[0];
+	this._div.id = 'settings';
+	document.body.appendChild(this._div);
+
+	this._actionsList = {};
+	this._assignments = settings.getAssignments();
+	var li = document.getElementsByTagName('li');
+	var self = this;
+	for (var i = 0; i < li.length; i++) {
+		li[i].addEventListener('click', self._selectMenuClickHandler.bind(self));
+	}
+
+	li[0].click();
+}
+
+var _p = SettingsGUI.prototype;
+
+_p._selectMenuClickHandler = function (e) {
+	var li = document.getElementsByTagName('li');
+	for (var i = 0; i < li.length; i++) {
+		$(li).removeClass('active');
+	}
+	$(e.target).addClass('active');
+	this._loadContent(e.target.id);
+};
+
+_p._loadContent = function (id) {
+	var self = this;
+	var dest = document.getElementById('right-panel');
+	$(dest).hide(100, function () {
+		dest.className = '';
+		$(dest).html('').addClass(id);
+
+		$(dest).show(300);
+
+		if (id === 'controls') {
+			self._loadControls();
+			self._addBindingsEventListeners();
+		}
+		else {
+			self._createSettings(id);
+		}
+	});
+};
+
+_p._createSettings = function (settingsType) {
+	var options = settings.getAll();
+	var dest = document.getElementById('right-panel');
+
+	for (var optionName in options) {
+		if(!options.hasOwnProperty(optionName))
+			continue;
+			
+		var op = options[optionName];
+		if(op.settingsType !== settingsType)
+			continue;
+		
+		var div = $('div').html(op.niceName)[0];
+		dest.appendChild(div);
+		
+		var input = $('input')[0];
+		dest.appendChild(input);
+		
+		input.type = op.inputType;
+		
+		switch (op.inputType) {
+			case 'range':
+				input.min = op.minValue;
+				input.max = op.maxValue;
+				input.step = op.step;
+				input.value = op.value;
+				break;
+			case 'button':
+				input.value = op.value;
+				break;
+		}
+		input.onmouseup = inputChange;
+		input.setAttribute('data-option-name', optionName);		
+	}
+
+	function inputChange() {
+		var optionName = this.getAttribute('data-option-name');
+		var value = this.value;	
+		settings.setPropValue(optionName, value);
+	}
+};
+
+
+_p._loadControls = function () {
+	var dest = document.getElementById('right-panel');
+	var list = this._assignments.getList();
+
+	for (var action in list) {
+		var outerDiv = $('div')[0];
+		$(outerDiv).addClass('binding');
+
+		var div = $('div')[0];
+		$(div).html(action).addClass('action-name');
+		outerDiv.appendChild(div);
+
+
+		div = $('div')[0];
+		this._actionsList[action] = div;
+		$(div).html(list[action]).addClass('key-name');
+		outerDiv.appendChild(div);
+
+		dest.appendChild(outerDiv);
+	}
+};
+
+_p._addBindingsEventListeners = function () {
+	var self = this;
+	window.addEventListener('click', function (e) {
+		self._clickHandler.call(self, e);
+	});
+	window.addEventListener('keydown', function (e) {
+		self._keydownHandler.call(self, e);
+	});
+	this._assignments._addEventListener('changeAssignnment', function (action) {
+		self._changeAssignmentHandler.call(self, action);
+	});
+};
+
+_p._removeEventListeners = function () {
+	// window.removeEventListener('click', clickHandler);
+	// window.removeEventListener('keydown', keydownHandler);
+	// this._assignments._removeEventListener('changeAssignnment', changeAssignmentHandler);
+};
+
+_p._changeAssignmentHandler = function (action) {
+	this._actionsList[action].innerHTML = this._assignments.getList()[action];
+};
+
+_p._clickHandler = function (e) {
+	var div = document.getElementsByClassName('key-name active')[0];
+	if (div)
+		$(div).removeClass('active');
+
+	if ($(e.target).hasClass('key-name')) {
+		var action = e.target.previousElementSibling.innerHTML;
+
+		this._assignments.setActiveBinding(action);
+		$(e.target).addClass('active');
+	}
+};
+
+_p._keydownHandler = function (e) {
+	var div = document.getElementsByClassName('key-name active')[0];
+	if (div) {
+		this._assignments.tryBind(e.keyCode);
+		e.preventDefault();
+	} else if (user.actions.Settings) {
+		this._removeEventListeners();
+		$(document.getElementById('settings')).remove();
+		$(document.getElementById('settings-style')).remove();
+	}
+};
+
+//#### src/js/classes/User.js
+function User() {
+	this.lang = navigator.language || navigator.userLanguage || 'pl';
+	this.cores = navigator.hardwareConcurrency || 4;
+	this.touchPoints = navigator.maxTouchPoints;
+	this.keys = {};
+	this._setEventListeners();
+	this.actions = {};
+}
+
+User.prototype._setEventListeners = function() {
+	var self = this;
+	window.addEventListener('keydown', function(e) {
+		var assignments = settings.getAssignments();
+		var action = assignments.getActionFromCode(e.keyCode);
+		if (action)
+			self.actions[action] = true;
+		self.keys[e.keyCode] = true;
+
+	});
+	window.addEventListener('keyup', function(e) {
+		var assignments = settings.getAssignments();
+		var action = assignments.getActionFromCode(e.keyCode);
+		if (action)
+			self.actions[action] = false;
+		self.keys[e.keyCode] = false;
+	});
+	window.addEventListener('blur', function() {
+		self.keys = {};
+	});
+}
+
+//#### src/js/classes/World.js
+function World(game) {
+	this._game = game;
+	this._layers = [];
+	this._tileSets = [];
+	this._sprites = {};
+	this._objects = [];
+	this._objectsOnScreen = [];
+	this._objectTypes = [];
+	this._loadData();
+	extend(this, new EventEmitter());
+}
+
+World.prototype._loadData = function() {
+	var self = this;
+	loadJSON('data/castle.json')
+		.then(function(map) {
+			// map
+			self.width = map.width;
+			self.height = map.height;
+			self.outputTileWidth = map.tilewidth;
+			self.outputTileHeight = map.tileheight;
+			self.tileFactor = self.outputTileHeight / self.outputTileWidth;
+			self._layers = map.layers;
+			self._createMapFromImportedData(map.layers);
+
+			for (var i = 0; i < map.tilesets.length; i++) {
+				self._tileSets.push(new TileSet(map.tilesets[i]))
+			}
+
+			self._createStaticObjects(map, self);
+
+			self._trigger('loaded');
+		});
+}
+
+World.prototype._createMapFromImportedData = function(layers) {
+	this._map = createArray(layers.length, this.width, this.width);
+	for (var i = 0; i < layers.length; i++) {
+		var data = layers[i].data;
+		if (data) {
+			var w = this.width;
+			for (var n = 0; n < data.length; n++) {
+				var x = n % w;
+				var y = n / w | 0;
+				this._map[i][x][y] = data[n];
+			}
+		}
+	}
+}
+
+World.prototype.drawLayers = function() {
+
+	var mapEdges = this._calculateMapEdges();
+
+	for (var i = 0; i < this._layers.length; i++) {
+		var l = this._layers[i];
+		if (l.data) {
+			for (var y = mapEdges.startY; y < mapEdges.endY; y++) {
+				for (var x = mapEdges.endX - 1; x >= mapEdges.startX; x--) {
+
+					var relPosition = relativate(x * this.outputTileWidth, y * this.outputTileHeight);
+					var screenX = relPosition.x;
+					var screenY = relPosition.y;
+
+					// UWAGA - 0
+					this._tileSets[0].draw(screenX, screenY, l.data[this.width * y + x])
+				}
+
+			}
+		}
+	}
+}
+
+World.prototype._calculateMapEdges = function() {
+	var startX = Math.floor((game._player.x - game._board.width / 2) / this.outputTileWidth - 1);
+	var startY = Math.floor((game._player.y - game._board.height / 2) / this.outputTileHeight - 1);
+	var endX = Math.ceil((game._player.x + game._board.width / 2) / this.outputTileWidth + 1);
+	var endY = Math.ceil((game._player.y + game._board.height / 2) / this.outputTileHeight + 1);
+
+	return {
+		startX: Math.max(0, startX),
+		startY: Math.max(0, startY),
+		endX: Math.min(this.width, endX),
+		endY: Math.min(this.height, endY)
+	};
+}
+
+World.prototype.drawObjects = function() {
+	this._objectsOnScreen = [];
+	this._objects.sort(function(o1, o2) {
+		if ((o1.y + o1.height) - (o2.y + o2.height) === 0) {
+			return o1.x - o2.x
+		} else return (o1.y + o1.height) - (o2.y + o2.height);
+	});
+	for (var i = 0; i < this._objects.length; i++) {
+		this._objectsOnScreen.push(this._objects[i]); // Do zmiany!!
+		var object = this._objects[i];
+		object.draw();
+	}
+}
+World.prototype._createStaticObjects = function(map) {
+	var i,
+		imageArray = [];
+
+	for (i = 0; i < map.tilesets.length; i++) {
+		var t = map.tilesets[i];
+		if (!t.hasOwnProperty('image')) {
+			for (var index in t.tiles) {
+				imageArray[(+index) + (+t.firstgid)] = t.tiles[index].image;
+			}
+		}
+	}
+
+	for (i = 0; i < map.layers.length; i++) {
+		var currentLayer = map.layers[i];
+		if (currentLayer.objects) {
+			for (var j = 0; j < currentLayer.objects.length; j++) {
+				var currentObject = currentLayer.objects[j];
+				var go = new GameObject(this, {
+					url: imageArray[currentObject.gid],
+					x: currentObject.x,
+					y: currentObject.y - currentObject.height,
+					visible: currentObject.visible,
+					name: currentObject.name
+				});
+
+				this.addObject(go)
+			}
+		}
+	}
+}
+
+World.prototype.addObject = function(o) {
+	this._objects.push(o);
+};
+
+
+
+/***** TILESET CLASS *****/
+function TileSet(tileSetProperties) {
+	extend(this, tileSetProperties);
+	this.load();
+}
+
+TileSet.prototype.load = function() {
+	if (this.image) {
+		this.rows = this.imageheight / this.tileheight;
+		this.cols = this.imagewidth / this.tilewidth;
+
+		this.img = new Image();
+		this.img.src = this.image;
+	} else {
+		this.images = [];
+		for (var index in this.tiles) {
+			var i = new Image();
+			i.src = this.tiles[index].image;
+			this.images.push(i);
+		}
+	}
+}
+
+TileSet.prototype.draw = function(screenX, screenY, index) {
+	index -= this.firstgid;
+
+	var left = (index % this.cols) * this.tilewidth;
+	var top = (index / this.cols | 0) * this.tileheight;
+
+	ctx.drawImage(this.img, left, top, this.tilewidth, this.tileheight,
+		screenX, screenY, this.tilewidth, this.tileheight
+	);
+}

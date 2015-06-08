@@ -1,11 +1,9 @@
-"use strict";
-
 function AudioManager() {
 	extend(this, new EventEmitter());
 	this._list = {};
-	this._globalVolume = settings.get('AUDIO_VOLUME');
-	this._muted = settings.get('AUDIO_MUTED');
 	this._waiting = 0;
+	this._loadSettings();
+	this._setSettingsChangeListener();
 }
 var _p = AudioManager.prototype;
 
@@ -22,26 +20,47 @@ _p.add = function (audioList) {
 		HTMLAudio.src = audio.src;
 		HTMLAudio.localVolume = audio.volume ? audio.volume / 100 : 1;
 		HTMLAudio.volume = this._globalVolume * HTMLAudio.localVolume;
-		HTMLAudio.muted = this._muted;
 
 		if (audio.loop && !audio.once) {
-			HTMLAudio.addEventListener('ended', function () {
-				this.play();
-			});
-		};
-
-		HTMLAudio.addEventListener('canplaythrough', this._canplaythrough.bind(this, HTMLAudio, audio, name));
-
+			HTMLAudio.addEventListener('ended', this.play);
+		}
+		
+		var cpt = this._canplaythrough.bind(this, HTMLAudio, audio, name);
+		HTMLAudio.addEventListener('canplaythrough', cpt);
 		HTMLAudio.onerror = this._onerror;
 
 	}
 	return this;
 };
 
+_p._loadSettings = function() {
+	var settingsAssignments = {
+		'AUDIO_VOLUME': '_globalVolume',
+	}
+	for(var optionName in settingsAssignments) {
+		var prop = settingsAssignments[optionName];
+		var value =  settings.getPropValue(optionName);
+		this[prop] = value;
+	}
+}
+
+_p._setSettingsChangeListener = function() {
+	
+	var actionAssignments = {
+		'AUDIO_VOLUME': '_changeGlobalVolume',
+	};
+	
+	settings._addEventListener('change', function(optionName, value) {
+		var method = actionAssignments[optionName];
+		
+		this[method].call(this, value);
+	}.bind(this));
+}
+
 _p._canplaythrough = function (HTMLAudio, audio, name) {
 	this._list[name] = HTMLAudio;
 	this._loaded();
-});
+};
 
 _p._onerror = function(audio) {
 	console.error('Cannot load this file: ' + audio.src);
@@ -60,31 +79,14 @@ _p._loaded = function() {
 	this._waiting--;
 	if(this._waiting === 0)
 		this._trigger('audioLoaded');
-}
+};
 
-_p.changeGlobalVolume = function (volume) {
+_p._changeGlobalVolume = function (volume) {
 	this._globalVolume = volume;
-	settings.set('AUDIO_VOLUME', volume);
 	for (var a in this._list) {
 		this._list[a].volume = this._list[a].localVolume * volume;
 	}
-}
-
-_p.muteAll = function () {
-	this._muted = true;
-	settings.set('AUDIO_MUTED', true);
-	for (var a in this._list) {
-		this._list[a].muted = true;
-	}
-}
-
-_p.unmuteAll = function () {
-	this._muted = false;
-	settings.set('AUDIO_MUTED', false);
-	for (var a in this._list) {
-		this._list[a].muted = false;
-	}
-}
+};
 
 function BgAudio() {
 	this._bgAudio = null;

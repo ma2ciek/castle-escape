@@ -53,7 +53,7 @@ _p._setAnimation = function() {
 
 	this.image.addEventListener('load', function () {
 		self.frameSets.forEach(function (animationName, index) {
-			self.animations[animationName] = new Animation(self, false, {
+			self.animations[animationName] = new Animation({
 				image: self.image,
 				frameWidth: frameWidth,
 				frameHeight: frameHeight,
@@ -64,7 +64,7 @@ _p._setAnimation = function() {
 			})
 		});
 		self.ready = true;
-		world.addObject(self);
+		self._world.addObject(self);
 	});
 }
 
@@ -83,77 +83,89 @@ _p.move = function () {
 	var dirX = 0;
 	var dirY = 0;
 
-	var oldX = this.x;
-	var oldY = this.y;
-
 	if (user.actions['Climb Up']) dirY--;
 	if (user.actions['Climb Down']) dirY++;
 	if (user.actions['Move Left']) dirX--;
 	if (user.actions['Move Right']) dirX++;
-	var tryingJump = (user.actions['Jump']) ? true : false;
+
+	var tryingJump = (user.actions.Jump) ? true : false;
 
 	var ladderId = 3;
 
 	var tiles = this.getTilesFromCollisionWithLayer(0);
 
-	if ((dirY !== 0 || this.isOnLadder) && tiles.indexOf(ladderId) !== -1) {
-		
-		if (tryingJump) {
-			this.isOnLadder = false;
-			this.Vy = -this.jumpHeight;
-			this.y += this.Vy;
-			if (this.isCollisionWithLayer(1)) {
-				while (this.isCollisionWithLayer(1))
-					this.y -= Math.sign(this.Vy);
-				this.Vy = 0;
-			}
-		} else {
-			this.isOnLadder = true;
-			this.Vy = 0;
-			this.y += this.speed * dirY;
-			if (this.isCollisionWithLayer(1) || (!this.getTilesFromCollisionWithLayer(0).includes(ladderId) && dirY === -1)) {
-				while (this.isCollisionWithLayer(1) || !this.getTilesFromCollisionWithLayer(0).includes(ladderId))
-					this.y -= dirY;
-			} else if (dirY !== 0)
-				this.animate('moveUp');
-		}
+	if(this.isOnLadder && tiles.indexOf(ladderId) !== -1 && tryingJump)
+		this._jumpFromLadder();
+
+	else if ((dirY !== 0 || this.isOnLadder) && tiles.indexOf(ladderId) !== -1)
+		this._moveOnLdder(dirY, ladderId);
+
+	else 
+		this._moveOnGroundOrTryFall(tryingJump);
+
+	if (dirX !== 0) 
+		this._moveAside(dirX);
+};
+
+_p._moveOnGroundOrTryFall = function(tryingJump) {
+	this.isOnLadder = false;
+	this.Vy++;
+	this.y += this.Vy;
+
+	var col = this.isInCollisionWithLayer(1);
+	if (col) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
+
+		tryingJump && this._jumpFromGround();
 	}
-	else {
-		this.isOnLadder = false;
-		this.Vy++;
-		this.y += this.Vy;
+}
 
-		var col = this.isCollisionWithLayer(1);
-		if (col) {
-			while (this.isCollisionWithLayer(1))
-				this.y -= Math.sign(this.Vy);
-			this.Vy = 0;
-
-			if (tryingJump) {
-				this.Vy -= this.jumpHeight;
-				this.y += this.Vy;
-				if (this.isCollisionWithLayer(1)) {
-					while (this.isCollisionWithLayer(1))
-						this.y -= Math.sign(this.Vy);
-					this.Vy = 0;
-				}
-			}
-		}
-	}
-
-	if (dirX !== 0) {
-		this.x += this.speed * dirX;
-		if (this.isCollisionWithLayer(1))
-			while (this.isCollisionWithLayer(1))
-				this.x -= dirX;
-		else if (dirX === 1)
-			this.animate('moveRight')
-		else if (dirX === -1)
-			this.animate('moveLeft')
+_p._jumpFromLadder = function() {
+	this.isOnLadder = false;
+	this.Vy = -this.jumpHeight;
+	this.y += this.Vy;
+	if (this.isInCollisionWithLayer(1)) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
 	}
 };
 
-_p.isCollisionWithLayer = function (layerIndex) {
+_p._jumpFromGround = function() {
+	this.Vy -= this.jumpHeight;
+	this.y += this.Vy;
+	if (this.isInCollisionWithLayer(1)) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
+	}
+};
+
+_p._moveAside = function(dirX) {
+	this.x += this.speed * dirX;
+	if (this.isInCollisionWithLayer(1))
+		while (this.isInCollisionWithLayer(1))
+			this.x -= dirX;
+	else if (dirX === 1)
+		this.animate('moveRight')
+	else if (dirX === -1)
+		this.animate('moveLeft')
+};
+
+_p._moveOnLdder = function(dirY, ladderId) {
+	this.isOnLadder = true;
+	this.Vy = 0;
+	this.y += this.speed * dirY;
+	if (this.isInCollisionWithLayer(1) || (!this.getTilesFromCollisionWithLayer(0).includes(ladderId) && dirY === -1)) {
+		while (this.isInCollisionWithLayer(1) || !this.getTilesFromCollisionWithLayer(0).includes(ladderId))
+			this.y -= dirY;
+	} else if (dirY !== 0)
+		this.animate('moveUp');
+};
+
+_p.isInCollisionWithLayer = function (layerIndex) {
 	var shadow = this.shadowRelativePosition;
 	var layer = this._world._layers[layerIndex].data;
 	var y1 = shadow.y / this._world.outputTileHeight | 0;

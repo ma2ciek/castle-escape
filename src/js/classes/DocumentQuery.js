@@ -22,9 +22,7 @@ function DocumentQuery() {
 var $ = DocumentQuery;
 
 function DocumentObjectsManager(elements) {
-	console.log(elements);
 	for(var i=0; i<elements.length; i++) {
-		console.log(0);
 		this[i] = elements[i];
 	}
 	this._elements = elements;
@@ -47,6 +45,7 @@ _p.addClass = function (someClass) {
 	this._each(function (el) {
 		el.className += el.className ? " " + someClass : someClass;
 	});
+	return this;
 };
 
 _p.removeClass = function (someClass) {
@@ -54,6 +53,7 @@ _p.removeClass = function (someClass) {
 		var regexp = new RegExp('\\s*' + someClass + '\\s*', 'g');
 		el.className = el.className.replace(regexp, ' ');
 	});
+	return this;
 };
 
 _p.hasClass = function (someClass) {
@@ -74,6 +74,7 @@ _p.hide = function (ms, callback) {
 		else
 			callback && callback();
 	});
+	return this;
 };
 
 _p.show = function (el, ms, callback) {
@@ -88,4 +89,18 @@ _p.show = function (el, ms, callback) {
 		else
 			callback && callback();
 	});
+	return this;
 };
+
+_p.html = function(html) {
+	this._each(function (el) {
+		el.innerHTML = html;
+	});
+	return this;
+}
+
+_p.remove = function() {
+	this._each(function (el) {
+		el.outerHTML = '';
+	});
+}

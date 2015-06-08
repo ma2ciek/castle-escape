@@ -108,29 +108,36 @@ function loadJSON() {
         }
     }
 
-    for (var i = 0; i < args.length; i++) {
-        var request = new XMLHttpRequest();
-        request.open('GET', args[i], true);
-        request.send(null);
-        request.responseType = 'json';
-        request.onload = (function(i) {
-            return function(connection) {
-                if (connection.target.status === 200) {
-                    // Success
-                    var data = connection.target.response;
-                    success[i] = data;
-                    count();
-                } else {
-                    fail.push(args[i]);
-                    count();
-                }
-            }
-        })(i);
-        request.onerror = function() {
-            fail.push(args[this]);
+    function getData(request, i) {
+        if (request.status === 200) {
+            // Success
+            var data = request.response;
+            success[i] = data;
             count();
-        }.bind(i); // Do zmiany!
+        } else 
+            getError(i);
     }
+
+    function getError(i) {
+        fail.push(args[i]);
+        count();
+    }
+
+    for (var i = 0; i < args.length; i++) {
+        (function(i) {
+            var request = new XMLHttpRequest();
+            request.open('GET', args[i], true);
+            request.send(null);
+            request.responseType = 'json';
+            request.onload = function() {
+                getData(this, i);
+            }
+            request.onerror = function() {
+                getError(i);
+            }
+        }(i));
+    }
+
     return {
         then: function(callback) {
             onSuccess = callback;
@@ -140,7 +147,7 @@ function loadJSON() {
             onFail = callback;
             return this;
         }
-    }
+    };
 }
 
 Math.sign = Math.sign || function(x) {

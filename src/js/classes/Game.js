@@ -98,10 +98,7 @@ Game.prototype._setNavigation = function() {
 
 		activeObjects.removeAll();
 
-
-
-
-		var hash = location.hash.length == 0 ? '' : location.hash.slice(1);
+		var hash = location.hash.length === 0 ? '' : location.hash.slice(1);
 		switch (hash) {
 			case 'play':
 				self.play();

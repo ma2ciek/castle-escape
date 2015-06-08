@@ -1,7 +1,4 @@
-"use strict";
-
 /* global console */
-/* jshint browser: true */
 
 document.addEventListener('init', function() {
 	init();

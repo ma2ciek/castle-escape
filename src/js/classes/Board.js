@@ -102,30 +102,26 @@ Board.prototype.createWelcomeScene = function() {
 
 
 Board.prototype.createSettingsScene = function() {
-	var self = this;
-	var assignmentsGUI = settings.assignmentsGUI;
 
-	assignmentsGUI._addEventListener('dirt-window', function() {
-		self.clear();
-		AORenderer.renderScene('Controls');
-	});
+	var xhr2 = new XMLHttpRequest();
+	xhr2.onload = function() {
+		var style = $('style')[0];
+		style.innerHTML = this.response;
+		style.id = 'settings-style'
+		document.head.appendChild(style);
+	}
+	xhr2.open('GET', './html/settings/style.css');
+	xhr2.send();
 
-	window.addEventListener('keydown', function(e) {
-		var success = settings.assignments.tryBind(e.keyCode)
-		if (success) 
-			e.preventDefault();
-	});
 
-	window.addEventListener('resize', function(e) {
-		var height = Math.max(assignmentsGUI.getMinHeight(), window.innerHeight);
-		assignmentsGUI._trigger('dirt-window');
-	})
-
-	assignmentsGUI.createActiveObjects();
-	assignmentsGUI._trigger('dirt-window');
-
+	var xhr = new XMLHttpRequest();
+	xhr.onload = function() {
+		var html = this.response;
+		var settingsGUI = new SettingsGUI(html);
+	}
+	xhr.open("GET", 'html/settings/index.html');
+	xhr.send();
 };
-
 
 Board.prototype.createCreditsScene = function() {
 	this._addScene(new Scene(this, {

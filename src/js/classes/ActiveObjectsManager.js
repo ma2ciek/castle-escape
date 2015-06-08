@@ -1,5 +1,3 @@
-"use strict";
-
 function ActiveObjectsManager(canvas) {
     this._canvas = canvas;
     this._list = [];
@@ -161,20 +159,36 @@ _p._getCursorPosition = function(e) {
 // CONSTRUCTOR Active Object
 function ActiveObject(manager, o) {
     this._manager = manager;
+    this._data = {};
+    this._classes = {};
+
+    this._setDimensions(o);
+    this._setEventListeners(o);
+    this._setOffset(o);
+}
+
+var _p = ActiveObject.prototype;
+
+_p._setDimensions = function(o) {
+    this.radius = o.radius;
+    this.width = o.width;
+    this.height = o.height;
+    this.shape = o.shape || 'rect';
+    this.zIndex = o.zIndex || 0;
+};
+
+_p._setEventListeners = function(o) {
     this.leftClick = o.leftClick || null;
     this.rightClick = o.rightClick || null;
     this.onHover = o.onHover || null;
     this.onBlur = o.onBlur || null;
     this.onMouseOut = o.onMouseOut || null;
+};
+
+_p._setOffset = function(o) {
     this.x = o.left || o.x || 0;
     this.y = o.top || o.y || 0;
-    this.width = o.width;
-    this.height = o.height;
-    this.shape = o.shape || 'rect';
-    this.zIndex = o.zIndex || 0;
     this.fromCenter = o.fromCenter || false;
-    this._data = {};
-    this._classes = {};
 
     if (!this.fromCenter && this.shape === 'arc') {
         this.x += this.radius;
@@ -184,9 +198,7 @@ function ActiveObject(manager, o) {
         this.x -= this.width / 2;
         this.y -= this.height / 2;
     }
-}
-
-var _p = ActiveObject.prototype;
+};
 
 _p.centerX = function() {
     return this.x + this.width / 2;

@@ -19,7 +19,7 @@ _p.add = function(o) {
 	return this;
 }
 
-_p._onload = function(imgName) {
+_p._onload = function() {
 	this._count();
 }
 

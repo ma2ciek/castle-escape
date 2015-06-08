@@ -1,37 +1,39 @@
-function Animation(obj, audio, options) {
+function Animation(options) {
+	extend(this, new EventEmitter);
 	options = options || {};
-	this._obj = obj;
 	this._size = options.size;
-	this._dynamicallyCreateFrames(options);
+	this._createFrames(options);
 	this._timeStamp = 0;
 	this._frameIndex = options.startIndex || 0;
 	this._frameLooped = options.frameLooped || false;
 	this._frameDuration = options.frameDuration || 3;
-	if (audio) {
-		this._audio = audio.cloneNode();
-		this._audio.addEventListener('ended', this._onAudioEnded);
-		this._audioLooped = options.audioLooped || false;
-	}
 	this._priorytet = options.priorytet || 0;
 }
 
 var _p = Animation.prototype;
 
+_p.setAudio = function(audio) {
+	this._audio = audio.cloneNode();
+	this._audio.addEventListener('ended', this._onAudioEnded);
+	this._audioLooped = options.audioLooped || false;
+}
+
 _p._onAudioEnded = function () {
 	if (this._audioLooped)
 		this._audio.play();
-	this._obj._trigger('audioEnded');
+	this._trigger('audioEnded');
 }
 
-_p._dynamicallyCreateFrames = function (options) {
+_p._createFrames = function (options) {
 
 	var offsetLeft = options.offsetLeft || 0;
 	var offsetTop = options.offsetTop || 0;
-	console.log(options.size);
+	var i;
+
 	this.frames = [];
 	// row direction is default
 	if (options.frameDirection === 'column') {
-		for (var i = 0; i < options.size; i++) {
+		for (i = 0; i < options.size; i++) {
 			this.frames[i] = {
 				width: options.frameWidth,
 				height: options.frameHeight,
@@ -41,7 +43,7 @@ _p._dynamicallyCreateFrames = function (options) {
 			}
 		}
 	} else {
-		for (var i = 0; i < options.size; i++) {
+		for (i = 0; i < options.size; i++) {
 			this.frames[i] = {
 				width: options.frameWidth,
 				height: options.frameHeight,
@@ -74,7 +76,7 @@ _p.nextFrame = function () {
 				this._frameIndex = 0;
 			else {
 				this._end = 1;
-				this._obj._trigger('animationEnd')
+				this._trigger('animationEnd')
 			}
 		}
 	}

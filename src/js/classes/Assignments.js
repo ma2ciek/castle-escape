@@ -1,5 +1,3 @@
-"use strict";
-
 function Assignments() {
 	extend(this, new EventEmitter());
 	this._list = {};
@@ -144,7 +142,8 @@ Assignments.prototype._setDefaultAssignments = function() {
 		'Climb Down': 'Down arrow',
 		'Jump': 'Space',
 		'Attack': 'Alt',
-		'Inventory': 'I'
+		'Inventory': 'I',
+		'Settings': 'Escape'
 	};
 
 	for (var action in defaultAssignments) {

@@ -1,9 +1,6 @@
 
 //#### src/js/main.js
-"use strict";
-
 /* global console */
-/* jshint browser: true */
 
 document.addEventListener('init', function() {
 	init();
@@ -103,7 +100,7 @@ function addAdditionalfunctionsToCtx(ctx) {
         // odgłos pierwszej litery
         sound && txt[i] !== ' ' && sound.cloneNode().play();
 
-        (function loop() {
+        function getDefault(self) {
             self.lineWidth = lineWidth;
             self.textAlign = 'left';
             self.save();
@@ -111,11 +108,14 @@ function addAdditionalfunctionsToCtx(ctx) {
             self.lineJoin = "round";
             self.globalAlpha = alpha;
             self.textBaseline = "hanging";
-           
-            // self.clearRect(x, y, 60, fontSize);
-            self.setLineDash([dashLen - dashOffset, dashOffset - speed]);
-            dashOffset -= speed;
+            self.setLineDash([dashLen - dashOffset, dashOffset - speed]);           
             self.strokeStyle = stroke;
+        }
+
+
+        (function loop() {
+            getDefault(self);
+            dashOffset -= speed;
             self.strokeText(txt[i], x, y);
 
             if (dashOffset > 0) requestAnimationFrame(loop);
@@ -258,29 +258,36 @@ function loadJSON() {
         }
     }
 
-    for (var i = 0; i < args.length; i++) {
-        var request = new XMLHttpRequest();
-        request.open('GET', args[i], true);
-        request.send(null);
-        request.responseType = 'json';
-        request.onload = (function(i) {
-            return function(connection) {
-                if (connection.target.status === 200) {
-                    // Success
-                    var data = connection.target.response;
-                    success[i] = data;
-                    count();
-                } else {
-                    fail.push(args[i]);
-                    count();
-                }
-            }
-        })(i);
-        request.onerror = function() {
-            fail.push(args[this]);
+    function getData(request, i) {
+        if (request.status === 200) {
+            // Success
+            var data = request.response;
+            success[i] = data;
             count();
-        }.bind(i); // Do zmiany!
+        } else 
+            getError(i);
     }
+
+    function getError(i) {
+        fail.push(args[i]);
+        count();
+    }
+
+    for (var i = 0; i < args.length; i++) {
+        (function(i) {
+            var request = new XMLHttpRequest();
+            request.open('GET', args[i], true);
+            request.send(null);
+            request.responseType = 'json';
+            request.onload = function() {
+                getData(this, i);
+            }
+            request.onerror = function() {
+                getError(i);
+            }
+        }(i));
+    }
+
     return {
         then: function(callback) {
             onSuccess = callback;
@@ -290,7 +297,7 @@ function loadJSON() {
             onFail = callback;
             return this;
         }
-    }
+    };
 }
 
 Math.sign = Math.sign || function(x) {
@@ -341,8 +348,6 @@ function relativate(x, y) {
 } 
 
 //#### src/js/classes/ActiveObjectsManager.js
-"use strict";
-
 function ActiveObjectsManager(canvas) {
     this._canvas = canvas;
     this._list = [];
@@ -504,20 +509,36 @@ _p._getCursorPosition = function(e) {
 // CONSTRUCTOR Active Object
 function ActiveObject(manager, o) {
     this._manager = manager;
+    this._data = {};
+    this._classes = {};
+
+    this._setDimensions(o);
+    this._setEventListeners(o);
+    this._setOffset(o);
+}
+
+var _p = ActiveObject.prototype;
+
+_p._setDimensions = function(o) {
+    this.radius = o.radius;
+    this.width = o.width;
+    this.height = o.height;
+    this.shape = o.shape || 'rect';
+    this.zIndex = o.zIndex || 0;
+};
+
+_p._setEventListeners = function(o) {
     this.leftClick = o.leftClick || null;
     this.rightClick = o.rightClick || null;
     this.onHover = o.onHover || null;
     this.onBlur = o.onBlur || null;
     this.onMouseOut = o.onMouseOut || null;
+};
+
+_p._setOffset = function(o) {
     this.x = o.left || o.x || 0;
     this.y = o.top || o.y || 0;
-    this.width = o.width;
-    this.height = o.height;
-    this.shape = o.shape || 'rect';
-    this.zIndex = o.zIndex || 0;
     this.fromCenter = o.fromCenter || false;
-    this._data = {};
-    this._classes = {};
 
     if (!this.fromCenter && this.shape === 'arc') {
         this.x += this.radius;
@@ -527,9 +548,7 @@ function ActiveObject(manager, o) {
         this.x -= this.width / 2;
         this.y -= this.height / 2;
     }
-}
-
-var _p = ActiveObject.prototype;
+};
 
 _p.centerX = function() {
     return this.x + this.width / 2;
@@ -581,7 +600,7 @@ _p.getClasses = function() {
 function ActiveObjectsRenderer(ctx, manager) {
 	this._ctx = ctx;
 	this._AOManager = manager;
-};
+}
 
 var _p = ActiveObjectsRenderer.prototype;
 
@@ -591,7 +610,7 @@ _p.renderAll = function() {
 		var ao = elements[i];
 		this.renderActiveObject(ao);
 	}
-}
+};
 
 _p.renderActiveObject = function(ao) {
 	var isHover = this._isHover(ao);
@@ -608,21 +627,21 @@ _p.renderActiveObject = function(ao) {
 	
 	aoStyle.bgColor && this._drawBackground(ao, aoStyle);
 	aoStyle.innerText && this._drawText(ao, aoStyle);
-}
+};
 
 _p._isHover = function(ao) {
 	return ao === this._AOManager.getHover() &&
 		typeof ao.data('hover') != 'undefined';
-}
+};
 
 _p._drawBackground = function(ao, aoStyle) {
 	this._ctx.fillStyle = aoStyle.bgColor;
 	this._ctx.fillRect(ao.x, ao.y, ao.width, ao.height);
-}
+};
 
 _p._drawText = function(ao, aoStyle) {
 	var style = this._defaultStyle;
-	var text = aoStyle['innerText'];
+	var text = aoStyle.innerText;
 
 	this._ctx.textBaseline = aoStyle.textBaseline;
 	this._ctx.font = aoStyle.textFont;
@@ -650,18 +669,16 @@ _p._drawText = function(ao, aoStyle) {
 	var textOffsetTop = ao.y + (ao.height - textHeight) / 2;
 
 	this._ctx.fillText(text, textOffsetLeft, textOffsetTop);
-}
+};
 
 _p._defaultStyle = {
 	textBaseline: 'hanging',
 	textColor: '#000',
 	textFont: '15px Arial',
 	textAlign: 'center'
-}
+};
 
 _p.renderScene = function(scene) {
-	var ctx = this._ctx;
-
 	var elements = this._AOManager.filter(function() {
 		return this.data('scene') === scene;
 	});
@@ -674,40 +691,42 @@ _p.renderScene = function(scene) {
 }
 
 //#### src/js/classes/Animation.js
-function Animation(obj, audio, options) {
+function Animation(options) {
+	extend(this, new EventEmitter);
 	options = options || {};
-	this._obj = obj;
 	this._size = options.size;
-	this._dynamicallyCreateFrames(options);
+	this._createFrames(options);
 	this._timeStamp = 0;
 	this._frameIndex = options.startIndex || 0;
 	this._frameLooped = options.frameLooped || false;
 	this._frameDuration = options.frameDuration || 3;
-	if (audio) {
-		this._audio = audio.cloneNode();
-		this._audio.addEventListener('ended', this._onAudioEnded);
-		this._audioLooped = options.audioLooped || false;
-	}
 	this._priorytet = options.priorytet || 0;
 }
 
 var _p = Animation.prototype;
 
+_p.setAudio = function(audio) {
+	this._audio = audio.cloneNode();
+	this._audio.addEventListener('ended', this._onAudioEnded);
+	this._audioLooped = options.audioLooped || false;
+}
+
 _p._onAudioEnded = function () {
 	if (this._audioLooped)
 		this._audio.play();
-	this._obj._trigger('audioEnded');
+	this._trigger('audioEnded');
 }
 
-_p._dynamicallyCreateFrames = function (options) {
+_p._createFrames = function (options) {
 
 	var offsetLeft = options.offsetLeft || 0;
 	var offsetTop = options.offsetTop || 0;
-	console.log(options.size);
+	var i;
+
 	this.frames = [];
 	// row direction is default
 	if (options.frameDirection === 'column') {
-		for (var i = 0; i < options.size; i++) {
+		for (i = 0; i < options.size; i++) {
 			this.frames[i] = {
 				width: options.frameWidth,
 				height: options.frameHeight,
@@ -717,7 +736,7 @@ _p._dynamicallyCreateFrames = function (options) {
 			}
 		}
 	} else {
-		for (var i = 0; i < options.size; i++) {
+		for (i = 0; i < options.size; i++) {
 			this.frames[i] = {
 				width: options.frameWidth,
 				height: options.frameHeight,
@@ -750,7 +769,7 @@ _p.nextFrame = function () {
 				this._frameIndex = 0;
 			else {
 				this._end = 1;
-				this._obj._trigger('animationEnd')
+				this._trigger('animationEnd')
 			}
 		}
 	}
@@ -768,8 +787,6 @@ _p.getCurrentFrame = function () {
 }
 
 //#### src/js/classes/Assignments.js
-"use strict";
-
 function Assignments() {
 	extend(this, new EventEmitter());
 	this._list = {};
@@ -914,7 +931,8 @@ Assignments.prototype._setDefaultAssignments = function() {
 		'Climb Down': 'Down arrow',
 		'Jump': 'Space',
 		'Attack': 'Alt',
-		'Inventory': 'I'
+		'Inventory': 'I',
+		'Settings': 'Escape'
 	};
 
 	for (var action in defaultAssignments) {
@@ -924,14 +942,12 @@ Assignments.prototype._setDefaultAssignments = function() {
 };
 
 //#### src/js/classes/AudioManager.js
-"use strict";
-
 function AudioManager() {
 	extend(this, new EventEmitter());
 	this._list = {};
-	this._globalVolume = settings.get('AUDIO_VOLUME');
-	this._muted = settings.get('AUDIO_MUTED');
 	this._waiting = 0;
+	this._loadSettings();
+	this._setSettingsChangeListener();
 }
 var _p = AudioManager.prototype;
 
@@ -948,26 +964,47 @@ _p.add = function (audioList) {
 		HTMLAudio.src = audio.src;
 		HTMLAudio.localVolume = audio.volume ? audio.volume / 100 : 1;
 		HTMLAudio.volume = this._globalVolume * HTMLAudio.localVolume;
-		HTMLAudio.muted = this._muted;
 
 		if (audio.loop && !audio.once) {
-			HTMLAudio.addEventListener('ended', function () {
-				this.play();
-			});
-		};
-
-		HTMLAudio.addEventListener('canplaythrough', this._canplaythrough.bind(this, HTMLAudio, audio, name));
-
+			HTMLAudio.addEventListener('ended', this.play);
+		}
+		
+		var cpt = this._canplaythrough.bind(this, HTMLAudio, audio, name);
+		HTMLAudio.addEventListener('canplaythrough', cpt);
 		HTMLAudio.onerror = this._onerror;
 
 	}
 	return this;
 };
 
+_p._loadSettings = function() {
+	var settingsAssignments = {
+		'AUDIO_VOLUME': '_globalVolume',
+	}
+	for(var optionName in settingsAssignments) {
+		var prop = settingsAssignments[optionName];
+		var value =  settings.getPropValue(optionName);
+		this[prop] = value;
+	}
+}
+
+_p._setSettingsChangeListener = function() {
+	
+	var actionAssignments = {
+		'AUDIO_VOLUME': '_changeGlobalVolume',
+	};
+	
+	settings._addEventListener('change', function(optionName, value) {
+		var method = actionAssignments[optionName];
+		
+		this[method].call(this, value);
+	}.bind(this));
+}
+
 _p._canplaythrough = function (HTMLAudio, audio, name) {
 	this._list[name] = HTMLAudio;
 	this._loaded();
-});
+};
 
 _p._onerror = function(audio) {
 	console.error('Cannot load this file: ' + audio.src);
@@ -986,31 +1023,14 @@ _p._loaded = function() {
 	this._waiting--;
 	if(this._waiting === 0)
 		this._trigger('audioLoaded');
-}
+};
 
-_p.changeGlobalVolume = function (volume) {
+_p._changeGlobalVolume = function (volume) {
 	this._globalVolume = volume;
-	settings.set('AUDIO_VOLUME', volume);
 	for (var a in this._list) {
 		this._list[a].volume = this._list[a].localVolume * volume;
 	}
-}
-
-_p.muteAll = function () {
-	this._muted = true;
-	settings.set('AUDIO_MUTED', true);
-	for (var a in this._list) {
-		this._list[a].muted = true;
-	}
-}
-
-_p.unmuteAll = function () {
-	this._muted = false;
-	settings.set('AUDIO_MUTED', false);
-	for (var a in this._list) {
-		this._list[a].muted = false;
-	}
-}
+};
 
 function BgAudio() {
 	this._bgAudio = null;
@@ -1137,30 +1157,26 @@ Board.prototype.createWelcomeScene = function() {
 
 
 Board.prototype.createSettingsScene = function() {
-	var self = this;
-	var assignmentsGUI = settings.assignmentsGUI;
 
-	assignmentsGUI._addEventListener('dirt-window', function() {
-		self.clear();
-		AORenderer.renderScene('Controls');
-	});
+	var xhr2 = new XMLHttpRequest();
+	xhr2.onload = function() {
+		var style = $('style')[0];
+		style.innerHTML = this.response;
+		style.id = 'settings-style'
+		document.head.appendChild(style);
+	}
+	xhr2.open('GET', './html/settings/style.css');
+	xhr2.send();
 
-	window.addEventListener('keydown', function(e) {
-		var success = settings.assignments.tryBind(e.keyCode)
-		if (success) 
-			e.preventDefault();
-	});
 
-	window.addEventListener('resize', function(e) {
-		var height = Math.max(assignmentsGUI.getMinHeight(), window.innerHeight);
-		assignmentsGUI._trigger('dirt-window');
-	})
-
-	assignmentsGUI.createActiveObjects();
-	assignmentsGUI._trigger('dirt-window');
-
+	var xhr = new XMLHttpRequest();
+	xhr.onload = function() {
+		var html = this.response;
+		var settingsGUI = new SettingsGUI(html);
+	}
+	xhr.open("GET", 'html/settings/index.html');
+	xhr.send();
 };
-
 
 Board.prototype.createCreditsScene = function() {
 	this._addScene(new Scene(this, {
@@ -1209,9 +1225,7 @@ function DocumentQuery() {
 var $ = DocumentQuery;
 
 function DocumentObjectsManager(elements) {
-	console.log(elements);
 	for(var i=0; i<elements.length; i++) {
-		console.log(0);
 		this[i] = elements[i];
 	}
 	this._elements = elements;
@@ -1234,6 +1248,7 @@ _p.addClass = function (someClass) {
 	this._each(function (el) {
 		el.className += el.className ? " " + someClass : someClass;
 	});
+	return this;
 };
 
 _p.removeClass = function (someClass) {
@@ -1241,6 +1256,7 @@ _p.removeClass = function (someClass) {
 		var regexp = new RegExp('\\s*' + someClass + '\\s*', 'g');
 		el.className = el.className.replace(regexp, ' ');
 	});
+	return this;
 };
 
 _p.hasClass = function (someClass) {
@@ -1261,6 +1277,7 @@ _p.hide = function (ms, callback) {
 		else
 			callback && callback();
 	});
+	return this;
 };
 
 _p.show = function (el, ms, callback) {
@@ -1275,7 +1292,21 @@ _p.show = function (el, ms, callback) {
 		else
 			callback && callback();
 	});
+	return this;
 };
+
+_p.html = function(html) {
+	this._each(function (el) {
+		el.innerHTML = html;
+	});
+	return this;
+}
+
+_p.remove = function() {
+	this._each(function (el) {
+		el.outerHTML = '';
+	});
+}
 
 //#### src/js/classes/EventEmitter.js
 function EventEmitter () {
@@ -1453,10 +1484,7 @@ Game.prototype._setNavigation = function() {
 
 		activeObjects.removeAll();
 
-
-
-
-		var hash = location.hash.length == 0 ? '' : location.hash.slice(1);
+		var hash = location.hash.length === 0 ? '' : location.hash.slice(1);
 		switch (hash) {
 			case 'play':
 				self.play();
@@ -1525,7 +1553,7 @@ _p.add = function(o) {
 	return this;
 }
 
-_p._onload = function(imgName) {
+_p._onload = function() {
 	this._count();
 }
 
@@ -1601,7 +1629,7 @@ _p._setAnimation = function() {
 
 	this.image.addEventListener('load', function () {
 		self.frameSets.forEach(function (animationName, index) {
-			self.animations[animationName] = new Animation(self, false, {
+			self.animations[animationName] = new Animation({
 				image: self.image,
 				frameWidth: frameWidth,
 				frameHeight: frameHeight,
@@ -1612,7 +1640,7 @@ _p._setAnimation = function() {
 			})
 		});
 		self.ready = true;
-		world.addObject(self);
+		self._world.addObject(self);
 	});
 }
 
@@ -1631,77 +1659,89 @@ _p.move = function () {
 	var dirX = 0;
 	var dirY = 0;
 
-	var oldX = this.x;
-	var oldY = this.y;
-
 	if (user.actions['Climb Up']) dirY--;
 	if (user.actions['Climb Down']) dirY++;
 	if (user.actions['Move Left']) dirX--;
 	if (user.actions['Move Right']) dirX++;
-	var tryingJump = (user.actions['Jump']) ? true : false;
+
+	var tryingJump = (user.actions.Jump) ? true : false;
 
 	var ladderId = 3;
 
 	var tiles = this.getTilesFromCollisionWithLayer(0);
 
-	if ((dirY !== 0 || this.isOnLadder) && tiles.indexOf(ladderId) !== -1) {
-		
-		if (tryingJump) {
-			this.isOnLadder = false;
-			this.Vy = -this.jumpHeight;
-			this.y += this.Vy;
-			if (this.isCollisionWithLayer(1)) {
-				while (this.isCollisionWithLayer(1))
-					this.y -= Math.sign(this.Vy);
-				this.Vy = 0;
-			}
-		} else {
-			this.isOnLadder = true;
-			this.Vy = 0;
-			this.y += this.speed * dirY;
-			if (this.isCollisionWithLayer(1) || (!this.getTilesFromCollisionWithLayer(0).includes(ladderId) && dirY === -1)) {
-				while (this.isCollisionWithLayer(1) || !this.getTilesFromCollisionWithLayer(0).includes(ladderId))
-					this.y -= dirY;
-			} else if (dirY !== 0)
-				this.animate('moveUp');
-		}
+	if(this.isOnLadder && tiles.indexOf(ladderId) !== -1 && tryingJump)
+		this._jumpFromLadder();
+
+	else if ((dirY !== 0 || this.isOnLadder) && tiles.indexOf(ladderId) !== -1)
+		this._moveOnLdder(dirY, ladderId);
+
+	else 
+		this._moveOnGroundOrTryFall(tryingJump);
+
+	if (dirX !== 0) 
+		this._moveAside(dirX);
+};
+
+_p._moveOnGroundOrTryFall = function(tryingJump) {
+	this.isOnLadder = false;
+	this.Vy++;
+	this.y += this.Vy;
+
+	var col = this.isInCollisionWithLayer(1);
+	if (col) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
+
+		tryingJump && this._jumpFromGround();
 	}
-	else {
-		this.isOnLadder = false;
-		this.Vy++;
-		this.y += this.Vy;
+}
 
-		var col = this.isCollisionWithLayer(1);
-		if (col) {
-			while (this.isCollisionWithLayer(1))
-				this.y -= Math.sign(this.Vy);
-			this.Vy = 0;
-
-			if (tryingJump) {
-				this.Vy -= this.jumpHeight;
-				this.y += this.Vy;
-				if (this.isCollisionWithLayer(1)) {
-					while (this.isCollisionWithLayer(1))
-						this.y -= Math.sign(this.Vy);
-					this.Vy = 0;
-				}
-			}
-		}
-	}
-
-	if (dirX !== 0) {
-		this.x += this.speed * dirX;
-		if (this.isCollisionWithLayer(1))
-			while (this.isCollisionWithLayer(1))
-				this.x -= dirX;
-		else if (dirX === 1)
-			this.animate('moveRight')
-		else if (dirX === -1)
-			this.animate('moveLeft')
+_p._jumpFromLadder = function() {
+	this.isOnLadder = false;
+	this.Vy = -this.jumpHeight;
+	this.y += this.Vy;
+	if (this.isInCollisionWithLayer(1)) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
 	}
 };
 
-_p.isCollisionWithLayer = function (layerIndex) {
+_p._jumpFromGround = function() {
+	this.Vy -= this.jumpHeight;
+	this.y += this.Vy;
+	if (this.isInCollisionWithLayer(1)) {
+		while (this.isInCollisionWithLayer(1))
+			this.y -= Math.sign(this.Vy);
+		this.Vy = 0;
+	}
+};
+
+_p._moveAside = function(dirX) {
+	this.x += this.speed * dirX;
+	if (this.isInCollisionWithLayer(1))
+		while (this.isInCollisionWithLayer(1))
+			this.x -= dirX;
+	else if (dirX === 1)
+		this.animate('moveRight')
+	else if (dirX === -1)
+		this.animate('moveLeft')
+};
+
+_p._moveOnLdder = function(dirY, ladderId) {
+	this.isOnLadder = true;
+	this.Vy = 0;
+	this.y += this.speed * dirY;
+	if (this.isInCollisionWithLayer(1) || (!this.getTilesFromCollisionWithLayer(0).includes(ladderId) && dirY === -1)) {
+		while (this.isInCollisionWithLayer(1) || !this.getTilesFromCollisionWithLayer(0).includes(ladderId))
+			this.y -= dirY;
+	} else if (dirY !== 0)
+		this.animate('moveUp');
+};
+
+_p.isInCollisionWithLayer = function (layerIndex) {
 	var shadow = this.shadowRelativePosition;
 	var layer = this._world._layers[layerIndex].data;
 	var y1 = shadow.y / this._world.outputTileHeight | 0;
@@ -1741,23 +1781,16 @@ _p.getTilesFromCollisionWithLayer = function (layerIndex) {
 function Scene(board, o) {
 	extend(this, new EventEmitter());
 	this._board = board;
-	this._isVivible = !!o.isVivible;
-	this._height = o.height || board.height;
-	this._width = o.width || board.width;
-	this._left = o.left || board.width - o.right || 0;
-	this._top = o.top || board.width - o.bottom || 0;
 
-	if (o.alignCenter)
-		this._left = (board.width - this._width) / 2;
-	if (o.alignVertical)
-		this._top = (board.height - this._height) / 2;
+	this._isVivible = !!o.isVivible;
+	this._zIndex = o.zIndex || 0;
+
+	this._setDimensions(board, o);
+	this._setOffset(board, o);
 
 	this._bgColor = o.bgColor || null;
-	if(o.bgImage) 
+	if (o.bgImage)
 		this._bgImage = board.imgManager[o.bgImage];
-
-	this._objects = [];
-	this._zIndex = o.zIndex || 0;
 
 	this._objects = {};
 	this._sortedObjects = [];
@@ -1766,6 +1799,21 @@ function Scene(board, o) {
 		this._objects[objName] = new SceneObject(this, objName, o.objects[objName]);
 	}
 	this._sortObjects();
+}
+
+Scene.prototype._setDimensions = function(board, o) {
+	this._height = o.height || board.height;
+	this._width = o.width || board.width;
+};
+
+Scene.prototype._setOffset = function(board, o) {
+	this._left = o.left || board.width - o.right || 0;
+	this._top = o.top || board.width - o.bottom || 0;
+
+	if (o.alignCenter)
+		this._left = (board.width - this._width) / 2;
+	if (o.alignVertical)
+		this._top = (board.height - this._height) / 2;
 }
 
 Scene.prototype.getBoard = function() {
@@ -1784,7 +1832,7 @@ Scene.prototype._sortObjects = function() {
 	}
 	this._sortedObjects.sort(function(o1, o2) {
 		return o1._zIndex - o2._zIndex;
-	});	
+	});
 };
 
 Scene.prototype.draw = function() {
@@ -1794,7 +1842,7 @@ Scene.prototype.draw = function() {
 	}
 	if (this._bgImage)
 		ctx.drawImage(this._bgImage, this._left, this._top, this._width, this._height);
-	for (var i=0; i<this._sortedObjects.length; i++) {
+	for (var i = 0; i < this._sortedObjects.length; i++) {
 		this._sortedObjects[i].draw();
 	}
 };
@@ -1809,7 +1857,7 @@ Scene.prototype.attr = function() {
 };
 
 Scene.prototype.remove = function() {
-	for(var objName in this._objects) {
+	for (var objName in this._objects) {
 		this._objects[objName].remove();
 	}
 };
@@ -1827,11 +1875,11 @@ function SceneObject(_scene, _objName, o) {
 	this._scene = _scene;
 	this._objName = _objName;
 	this._hoverStyles = {};
-	
+
 	function ext(class_name) {
-		if(class_name in styles) {
-			for(var prop in styles[class_name]) {
-				if(prop === 'extend')
+		if (class_name in styles) {
+			for (var prop in styles[class_name]) {
+				if (prop === 'extend')
 					ext(styles[class_name].extend);
 				else
 					o[prop] = styles[class_name][prop];
@@ -1841,17 +1889,17 @@ function SceneObject(_scene, _objName, o) {
 	ext(_objName);
 
 	function extHover(class_name) {
-		if(class_name in styles) {
-			for(var prop in styles[class_name]) {
-				if(prop === 'extend')
+		if (class_name in styles) {
+			for (var prop in styles[class_name]) {
+				if (prop === 'extend')
 					extHover(styles[class_name].extend);
-				else 
+				else
 					self._hoverStyles['_' + prop] = styles[class_name][prop];
 			}
 		}
 	}
 
-	if(_objName + 'Hover' in styles || o.onHover || o.onBlur) {
+	if (_objName + 'Hover' in styles || o.onHover || o.onBlur) {
 
 		extHover(_objName + 'Hover')
 		console.log(this, this._hoverStyles);
@@ -1876,32 +1924,31 @@ function SceneObject(_scene, _objName, o) {
 	this._borderWidth = o.borderWidth || 0;
 	this._borderColor = o.color || o.borderColor || 'black';
 
-	if(o.bgImage) {
-		this._bgImage = o.bgImage;
-		this._imgWidth = o.imgWidth || o.bgImage.width;
-		this._imgHeight = o.imgHeight || o.bgImage.height;
-	}
+	this._setBgImage(o);
+
 
 	this._zIndex = (o.zIndex || 0) + this._scene.attr('zIndex');
 
-	this._text = o.text || '';
-	if(this._text) {
-		this._textFromLeft = (o.textFromLeft || 0) + this._left;
-		this._textFromTop = (o.textFromTop || 0) + this._top;
-
-		this._color = o.color || '#000';
-		this._fontSize = o.fontSize || '12px';
-		this._textBaseLine = o.textBaseline || 'top';
-		this._fontFamily = o.fontFamily || 'Arial';
-		this._textAlign = o.textAlign || 'left';
-	}
+	this._setText(o);
 
 	this._onClick = o.onClick && o.onClick.bind(this) || null;
 
 	this._createActiveObjectFromSelf();
 }
 
-SceneObject.prototype._setDimensions = function(o) {
+var _p = SceneObject.prototype;
+
+_p._setBgImage = function(o) {
+	if (!o.bgImage)
+		return;
+
+	this._bgImage = o.bgImage;
+	this._imgWidth = o.imgWidth || o.bgImage.width;
+	this._imgHeight = o.imgHeight || o.bgImage.height;
+}
+
+
+_p._setDimensions = function(o) {
 	this._left = (o.left || 0) + this._scene.attr('left');
 	this._top = (o.top || 0) + this._scene.attr('top')
 	this._width = o.width || this._scene.attr('width');
@@ -1913,7 +1960,24 @@ SceneObject.prototype._setDimensions = function(o) {
 		this._top += (this._scene.attr('height') - this._height) / 2;
 };
 
-SceneObject.prototype._createActiveObjectFromSelf = function() {
+_p._setText = function(o) {
+	this._text = o.text || '';
+	if (!this._text)
+		return;
+
+	this._textFromLeft = (o.textFromLeft || 0) + this._left;
+	this._textFromTop = (o.textFromTop || 0) + this._top;
+
+	this._color = o.color || '#000';
+	this._fontSize = o.fontSize || '12px';
+	this._textBaseLine = o.textBaseline || 'top';
+	this._fontFamily = o.fontFamily || 'Arial';
+	this._textAlign = o.textAlign || 'left';
+};
+
+
+
+_p._createActiveObjectFromSelf = function() {
 	this._ao = activeObjects.add({
 		left: this._left,
 		top: this._top,
@@ -1927,9 +1991,9 @@ SceneObject.prototype._createActiveObjectFromSelf = function() {
 	});
 };
 
-SceneObject.prototype.draw = function() {
+_p.draw = function() {
 	var o = extend({}, this);
-	if(o._hover) {
+	if (o._hover) {
 		extend(o, o._hoverStyles);
 	}
 
@@ -1941,7 +2005,7 @@ SceneObject.prototype.draw = function() {
 		var isFill = !!o._bgColor;
 		var isStroke = (o._borderWidth > 0);
 
-		if(o._shape === 'rect') {
+		if (o._shape === 'rect') {
 			ctx.roundRect(o._left, o._top, o._width, o._height, o._cornerRadius, isFill, isStroke)
 		}
 	}
@@ -1959,12 +2023,12 @@ SceneObject.prototype.draw = function() {
 	}
 };
 
-SceneObject.prototype.remove = function() {
+_p.remove = function() {
 	this._ao && this._ao.remove();
 	delete this._scene[this._objName];
 };
 
-SceneObject.prototype.attr = function() {
+_p.attr = function() {
 	if (arguments.length === 1)
 		return this['_' + arguments[0]];
 	else {
@@ -2094,80 +2158,254 @@ var styles = {
 		text: 'Graphics:',
 		zIndex: 1
 	},
-
-
-
-
-	// SETTINGS
-	menu: {
-		alignVertical: true,
-		color: '#aaa',
-		left: 10,
-		textFromLeft: 10,
-		width: 200,
-		height: 20,
-		fontSize: '16px',
-		bgColor: 'white'
-	}
 };
 
 //#### src/js/classes/Settings.js
-"use strict";
-
 function Settings() {
+	extend(this, new EventEmitter());
 	this._options = {};
 	this._storageOptions = {};
-	this._defaultOptions = {
-		AUDIO_MUTED: false,
-		AUDIO_VOLUME: 1,
-		AUTO_SAVE: true
-	}
+	this.setDefaultOptions();
 	this._assignments = new Assignments();
 	this._loadSettingsFromStorage();
-
-	shallowCopyTo(this._options, this._defaultOptions);
-	shallowCopyTo(this._options, this._storageOptions);
 }
 
 var _p = Settings.prototype;
 
-_p.getAssignments = function() {
-	return this._assignments;
-}
+_p.setDefaultOptions = function () {
+	// Can be stored in external JSON file
+	var options = this._options = {
+		AUDIO_VOLUME: {
+			value: 1,	
+			valueType: 'number',
+			settingsType: 'audio',
+			inputType: 'range',
+			minValue: 0,
+			maxValue: 1,
+			step: 0.1
+		}
+	};
 
-_p.save = function() {
-	var data = JSON.stringify(this._options);
+	(function createNiceNames() {
+		for (var propName in options) {
+			var o = options[propName];
+			o.niceName = propName.replace('_', ' ').toLowerCase();
+			o.niceName = propName[0] + o.niceName.substr(1);
+		}
+	})();
+};
+
+_p.getAssignments = function () {
+	return this._assignments;
+};
+
+_p.save = function () {
+	var values = {};
+	for (var propName in this._options) {
+		values[propName] = this._options[propName].value;
+	};
+
+	var data = JSON.stringify(values);
 	localStorage.setItem('Warrior-settings', data);
 };
 
-_p._loadSettingsFromStorage = function() {
+_p._loadSettingsFromStorage = function () {
 	var data = localStorage.getItem('Warrior-settings') || '{}';
-	this._storageOptions = JSON.parse(data);
-};
+	var storageOptions = JSON.parse(data);
 
-_p.get = function(property) {
-	if (typeof property === 'undefined')
-		return this._options;
-	if (!this._options.hasOwnProperty(property))
-		console.error('No such property in settings');
-	return this._options[property];
-};
-
-_p.set = function(property, value) {
-	if (!this._options.hasOwnProperty(property))
-		console.error('No such property in settings');
-	else {
-		this._options[property] = value;
-		if (this._options['AUTO_SAVE'])
-			this.save();
+	for (var propName in storageOptions) {
+		this._options[propName].value = storageOptions[propName];
 	}
 };
 
-_p.restoreDefault = function() {
-	this._options = shallowCopyTo({}, this._defaultOptions);
-	this.save();
+_p.getPropValue = function (property) {
+	console.log(property);
+	return this._options[property].value;
 };
 
+_p.getAll = function () {
+	return this._options;
+};
+
+_p.setPropValue = function (property, value) {
+	console.log(property, value)
+	var op = this._options[property];
+	console.log(op);
+	if (op.valueType === 'number')
+		value = Number(value);
+
+	if (op.valueType === 'boolean') {
+	console.log(value);
+		
+		value = (value === 'true' || value === true || value === 1 || value === '1');
+	console.log(value);
+	
+	}
+
+	this._options[property].value = value;
+	this.save();
+	this._trigger('change', property, value);
+};
+
+//#### src/js/classes/SettingsGUI.js
+function SettingsGUI(html) {
+	this._div = $('div').html(html)[0];
+	this._div.id = 'settings';
+	document.body.appendChild(this._div);
+
+	this._actionsList = {};
+	this._assignments = settings.getAssignments();
+	var li = document.getElementsByTagName('li');
+	var self = this;
+	for (var i = 0; i < li.length; i++) {
+		li[i].addEventListener('click', self._selectMenuClickHandler.bind(self));
+	}
+
+	li[0].click();
+}
+
+var _p = SettingsGUI.prototype;
+
+_p._selectMenuClickHandler = function (e) {
+	var li = document.getElementsByTagName('li');
+	for (var i = 0; i < li.length; i++) {
+		$(li).removeClass('active');
+	}
+	$(e.target).addClass('active');
+	this._loadContent(e.target.id);
+};
+
+_p._loadContent = function (id) {
+	var self = this;
+	var dest = document.getElementById('right-panel');
+	$(dest).hide(100, function () {
+		dest.className = '';
+		$(dest).html('').addClass(id);
+
+		$(dest).show(300);
+
+		if (id === 'controls') {
+			self._loadControls();
+			self._addBindingsEventListeners();
+		}
+		else {
+			self._createSettings(id);
+		}
+	});
+};
+
+_p._createSettings = function (settingsType) {
+	var options = settings.getAll();
+	var dest = document.getElementById('right-panel');
+
+	for (var optionName in options) {
+		if(!options.hasOwnProperty(optionName))
+			continue;
+			
+		var op = options[optionName];
+		if(op.settingsType !== settingsType)
+			continue;
+		
+		var div = $('div').html(op.niceName)[0];
+		dest.appendChild(div);
+		
+		var input = $('input')[0];
+		dest.appendChild(input);
+		
+		input.type = op.inputType;
+		
+		switch (op.inputType) {
+			case 'range':
+				input.min = op.minValue;
+				input.max = op.maxValue;
+				input.step = op.step;
+				input.value = op.value;
+				break;
+			case 'button':
+				input.value = op.value;
+				break;
+		}
+		input.onmouseup = inputChange;
+		input.setAttribute('data-option-name', optionName);		
+	}
+
+	function inputChange() {
+		var optionName = this.getAttribute('data-option-name');
+		var value = this.value;	
+		settings.setPropValue(optionName, value);
+	}
+};
+
+
+_p._loadControls = function () {
+	var dest = document.getElementById('right-panel');
+	var list = this._assignments.getList();
+
+	for (var action in list) {
+		var outerDiv = $('div')[0];
+		$(outerDiv).addClass('binding');
+
+		var div = $('div')[0];
+		$(div).html(action).addClass('action-name');
+		outerDiv.appendChild(div);
+
+
+		div = $('div')[0];
+		this._actionsList[action] = div;
+		$(div).html(list[action]).addClass('key-name');
+		outerDiv.appendChild(div);
+
+		dest.appendChild(outerDiv);
+	}
+};
+
+_p._addBindingsEventListeners = function () {
+	var self = this;
+	window.addEventListener('click', function (e) {
+		self._clickHandler.call(self, e);
+	});
+	window.addEventListener('keydown', function (e) {
+		self._keydownHandler.call(self, e);
+	});
+	this._assignments._addEventListener('changeAssignnment', function (action) {
+		self._changeAssignmentHandler.call(self, action);
+	});
+};
+
+_p._removeEventListeners = function () {
+	// window.removeEventListener('click', clickHandler);
+	// window.removeEventListener('keydown', keydownHandler);
+	// this._assignments._removeEventListener('changeAssignnment', changeAssignmentHandler);
+};
+
+_p._changeAssignmentHandler = function (action) {
+	this._actionsList[action].innerHTML = this._assignments.getList()[action];
+};
+
+_p._clickHandler = function (e) {
+	var div = document.getElementsByClassName('key-name active')[0];
+	if (div)
+		$(div).removeClass('active');
+
+	if ($(e.target).hasClass('key-name')) {
+		var action = e.target.previousElementSibling.innerHTML;
+
+		this._assignments.setActiveBinding(action);
+		$(e.target).addClass('active');
+	}
+};
+
+_p._keydownHandler = function (e) {
+	var div = document.getElementsByClassName('key-name active')[0];
+	if (div) {
+		this._assignments.tryBind(e.keyCode);
+		e.preventDefault();
+	} else if (user.actions.Settings) {
+		this._removeEventListeners();
+		$(document.getElementById('settings')).remove();
+		$(document.getElementById('settings-style')).remove();
+	}
+};
 
 //#### src/js/classes/User.js
 function User() {
@@ -2214,30 +2452,30 @@ function World(game) {
 	extend(this, new EventEmitter());
 }
 
-World.prototype._loadData = function () {
+World.prototype._loadData = function() {
 	var self = this;
 	loadJSON('data/castle.json')
-		.then(function (map) {
-		// map
-		self.width = map.width;
-		self.height = map.height;
-		self.outputTileWidth = map.tilewidth;
-		self.outputTileHeight = map.tileheight;
-		self.tileFactor = self.outputTileHeight / self.outputTileWidth;
-		self._layers = map.layers;
-		self._createMapFromImportedData(map.layers);
+		.then(function(map) {
+			// map
+			self.width = map.width;
+			self.height = map.height;
+			self.outputTileWidth = map.tilewidth;
+			self.outputTileHeight = map.tileheight;
+			self.tileFactor = self.outputTileHeight / self.outputTileWidth;
+			self._layers = map.layers;
+			self._createMapFromImportedData(map.layers);
 
-		for (var i = 0; i < map.tilesets.length; i++) {
-			self._tileSets.push(new TileSet(map.tilesets[i]))
-		}
+			for (var i = 0; i < map.tilesets.length; i++) {
+				self._tileSets.push(new TileSet(map.tilesets[i]))
+			}
 
-		self._createStaticObjects(map, self);
-		
-		self._trigger('loaded');
-	});
+			self._createStaticObjects(map, self);
+
+			self._trigger('loaded');
+		});
 }
 
-World.prototype._createMapFromImportedData = function (layers) {
+World.prototype._createMapFromImportedData = function(layers) {
 	this._map = createArray(layers.length, this.width, this.width);
 	for (var i = 0; i < layers.length; i++) {
 		var data = layers[i].data;
@@ -2252,28 +2490,20 @@ World.prototype._createMapFromImportedData = function (layers) {
 	}
 }
 
-World.prototype.drawLayers = function () {
+World.prototype.drawLayers = function() {
 
-	var startX = Math.floor((game._player.x - game._board.width / 2) / this.outputTileWidth - 1);
-	var startY = Math.floor((game._player.y - game._board.height / 2) / this.outputTileHeight - 1);
-	var endX = Math.ceil((game._player.x + game._board.width / 2) / this.outputTileWidth + 1);
-	var endY = Math.ceil((game._player.y + game._board.height / 2) / this.outputTileHeight + 1);
-
-	
-	startX = Math.max(0, startX);
-	startY = Math.max(0, startY);
-	endX = Math.min(this.width, endX);
-	endY = Math.min(this.height, endY);
+	var mapEdges = this._calculateMapEdges();
 
 	for (var i = 0; i < this._layers.length; i++) {
 		var l = this._layers[i];
 		if (l.data) {
-			for (var y = startY; y < endY; y++) {
-				for (var x = endX - 1; x >= startX; x--) {
+			for (var y = mapEdges.startY; y < mapEdges.endY; y++) {
+				for (var x = mapEdges.endX - 1; x >= mapEdges.startX; x--) {
 
-					var relPosition = relativate(x * this.outputTileWidth, y * this.outputTileHeight)
+					var relPosition = relativate(x * this.outputTileWidth, y * this.outputTileHeight);
 					var screenX = relPosition.x;
 					var screenY = relPosition.y;
+
 					// UWAGA - 0
 					this._tileSets[0].draw(screenX, screenY, l.data[this.width * y + x])
 				}
@@ -2283,13 +2513,26 @@ World.prototype.drawLayers = function () {
 	}
 }
 
-World.prototype.drawObjects = function () {
+World.prototype._calculateMapEdges = function() {
+	var startX = Math.floor((game._player.x - game._board.width / 2) / this.outputTileWidth - 1);
+	var startY = Math.floor((game._player.y - game._board.height / 2) / this.outputTileHeight - 1);
+	var endX = Math.ceil((game._player.x + game._board.width / 2) / this.outputTileWidth + 1);
+	var endY = Math.ceil((game._player.y + game._board.height / 2) / this.outputTileHeight + 1);
+
+	return {
+		startX: Math.max(0, startX),
+		startY: Math.max(0, startY),
+		endX: Math.min(this.width, endX),
+		endY: Math.min(this.height, endY)
+	};
+}
+
+World.prototype.drawObjects = function() {
 	this._objectsOnScreen = [];
-	this._objects.sort(function (o1, o2) {
-		if ((o1.y + o1.height) - (o2.y + o2.height) === 0 ) {
+	this._objects.sort(function(o1, o2) {
+		if ((o1.y + o1.height) - (o2.y + o2.height) === 0) {
 			return o1.x - o2.x
-		}
-		else return (o1.y + o1.height) - (o2.y + o2.height) ;
+		} else return (o1.y + o1.height) - (o2.y + o2.height);
 	});
 	for (var i = 0; i < this._objects.length; i++) {
 		this._objectsOnScreen.push(this._objects[i]); // Do zmiany!!
@@ -2297,8 +2540,8 @@ World.prototype.drawObjects = function () {
 		object.draw();
 	}
 }
-World.prototype._createStaticObjects = function (map) {
-	var i, 
+World.prototype._createStaticObjects = function(map) {
+	var i,
 		imageArray = [];
 
 	for (i = 0; i < map.tilesets.length; i++) {
@@ -2329,10 +2572,9 @@ World.prototype._createStaticObjects = function (map) {
 	}
 }
 
-World.prototype.addObject = function (o) {
+World.prototype.addObject = function(o) {
 	this._objects.push(o);
 };
-
 
 
 
@@ -2342,15 +2584,14 @@ function TileSet(tileSetProperties) {
 	this.load();
 }
 
-TileSet.prototype.load = function () {
+TileSet.prototype.load = function() {
 	if (this.image) {
 		this.rows = this.imageheight / this.tileheight;
 		this.cols = this.imagewidth / this.tilewidth;
 
 		this.img = new Image();
 		this.img.src = this.image;
-	}
-	else {
+	} else {
 		this.images = [];
 		for (var index in this.tiles) {
 			var i = new Image();
@@ -2360,13 +2601,13 @@ TileSet.prototype.load = function () {
 	}
 }
 
-TileSet.prototype.draw = function (screenX, screenY, index) {
+TileSet.prototype.draw = function(screenX, screenY, index) {
 	index -= this.firstgid;
 
 	var left = (index % this.cols) * this.tilewidth;
 	var top = (index / this.cols | 0) * this.tileheight;
-	
+
 	ctx.drawImage(this.img, left, top, this.tilewidth, this.tileheight,
 		screenX, screenY, this.tilewidth, this.tileheight
-		);
+	);
 }

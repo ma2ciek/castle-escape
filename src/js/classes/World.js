@@ -10,30 +10,30 @@ function World(game) {
 	extend(this, new EventEmitter());
 }
 
-World.prototype._loadData = function () {
+World.prototype._loadData = function() {
 	var self = this;
 	loadJSON('data/castle.json')
-		.then(function (map) {
-		// map
-		self.width = map.width;
-		self.height = map.height;
-		self.outputTileWidth = map.tilewidth;
-		self.outputTileHeight = map.tileheight;
-		self.tileFactor = self.outputTileHeight / self.outputTileWidth;
-		self._layers = map.layers;
-		self._createMapFromImportedData(map.layers);
+		.then(function(map) {
+			// map
+			self.width = map.width;
+			self.height = map.height;
+			self.outputTileWidth = map.tilewidth;
+			self.outputTileHeight = map.tileheight;
+			self.tileFactor = self.outputTileHeight / self.outputTileWidth;
+			self._layers = map.layers;
+			self._createMapFromImportedData(map.layers);
 
-		for (var i = 0; i < map.tilesets.length; i++) {
-			self._tileSets.push(new TileSet(map.tilesets[i]))
-		}
+			for (var i = 0; i < map.tilesets.length; i++) {
+				self._tileSets.push(new TileSet(map.tilesets[i]))
+			}
 
-		self._createStaticObjects(map, self);
-		
-		self._trigger('loaded');
-	});
+			self._createStaticObjects(map, self);
+
+			self._trigger('loaded');
+		});
 }
 
-World.prototype._createMapFromImportedData = function (layers) {
+World.prototype._createMapFromImportedData = function(layers) {
 	this._map = createArray(layers.length, this.width, this.width);
 	for (var i = 0; i < layers.length; i++) {
 		var data = layers[i].data;
@@ -48,28 +48,20 @@ World.prototype._createMapFromImportedData = function (layers) {
 	}
 }
 
-World.prototype.drawLayers = function () {
+World.prototype.drawLayers = function() {
 
-	var startX = Math.floor((game._player.x - game._board.width / 2) / this.outputTileWidth - 1);
-	var startY = Math.floor((game._player.y - game._board.height / 2) / this.outputTileHeight - 1);
-	var endX = Math.ceil((game._player.x + game._board.width / 2) / this.outputTileWidth + 1);
-	var endY = Math.ceil((game._player.y + game._board.height / 2) / this.outputTileHeight + 1);
-
-	
-	startX = Math.max(0, startX);
-	startY = Math.max(0, startY);
-	endX = Math.min(this.width, endX);
-	endY = Math.min(this.height, endY);
+	var mapEdges = this._calculateMapEdges();
 
 	for (var i = 0; i < this._layers.length; i++) {
 		var l = this._layers[i];
 		if (l.data) {
-			for (var y = startY; y < endY; y++) {
-				for (var x = endX - 1; x >= startX; x--) {
+			for (var y = mapEdges.startY; y < mapEdges.endY; y++) {
+				for (var x = mapEdges.endX - 1; x >= mapEdges.startX; x--) {
 
-					var relPosition = relativate(x * this.outputTileWidth, y * this.outputTileHeight)
+					var relPosition = relativate(x * this.outputTileWidth, y * this.outputTileHeight);
 					var screenX = relPosition.x;
 					var screenY = relPosition.y;
+
 					// UWAGA - 0
 					this._tileSets[0].draw(screenX, screenY, l.data[this.width * y + x])
 				}
@@ -79,13 +71,26 @@ World.prototype.drawLayers = function () {
 	}
 }
 
-World.prototype.drawObjects = function () {
+World.prototype._calculateMapEdges = function() {
+	var startX = Math.floor((game._player.x - game._board.width / 2) / this.outputTileWidth - 1);
+	var startY = Math.floor((game._player.y - game._board.height / 2) / this.outputTileHeight - 1);
+	var endX = Math.ceil((game._player.x + game._board.width / 2) / this.outputTileWidth + 1);
+	var endY = Math.ceil((game._player.y + game._board.height / 2) / this.outputTileHeight + 1);
+
+	return {
+		startX: Math.max(0, startX),
+		startY: Math.max(0, startY),
+		endX: Math.min(this.width, endX),
+		endY: Math.min(this.height, endY)
+	};
+}
+
+World.prototype.drawObjects = function() {
 	this._objectsOnScreen = [];
-	this._objects.sort(function (o1, o2) {
-		if ((o1.y + o1.height) - (o2.y + o2.height) === 0 ) {
+	this._objects.sort(function(o1, o2) {
+		if ((o1.y + o1.height) - (o2.y + o2.height) === 0) {
 			return o1.x - o2.x
-		}
-		else return (o1.y + o1.height) - (o2.y + o2.height) ;
+		} else return (o1.y + o1.height) - (o2.y + o2.height);
 	});
 	for (var i = 0; i < this._objects.length; i++) {
 		this._objectsOnScreen.push(this._objects[i]); // Do zmiany!!
@@ -93,8 +98,8 @@ World.prototype.drawObjects = function () {
 		object.draw();
 	}
 }
-World.prototype._createStaticObjects = function (map) {
-	var i, 
+World.prototype._createStaticObjects = function(map) {
+	var i,
 		imageArray = [];
 
 	for (i = 0; i < map.tilesets.length; i++) {
@@ -125,10 +130,9 @@ World.prototype._createStaticObjects = function (map) {
 	}
 }
 
-World.prototype.addObject = function (o) {
+World.prototype.addObject = function(o) {
 	this._objects.push(o);
 };
-
 
 
 
@@ -138,15 +142,14 @@ function TileSet(tileSetProperties) {
 	this.load();
 }
 
-TileSet.prototype.load = function () {
+TileSet.prototype.load = function() {
 	if (this.image) {
 		this.rows = this.imageheight / this.tileheight;
 		this.cols = this.imagewidth / this.tilewidth;
 
 		this.img = new Image();
 		this.img.src = this.image;
-	}
-	else {
+	} else {
 		this.images = [];
 		for (var index in this.tiles) {
 			var i = new Image();
@@ -156,13 +159,13 @@ TileSet.prototype.load = function () {
 	}
 }
 
-TileSet.prototype.draw = function (screenX, screenY, index) {
+TileSet.prototype.draw = function(screenX, screenY, index) {
 	index -= this.firstgid;
 
 	var left = (index % this.cols) * this.tilewidth;
 	var top = (index / this.cols | 0) * this.tileheight;
-	
+
 	ctx.drawImage(this.img, left, top, this.tilewidth, this.tileheight,
 		screenX, screenY, this.tilewidth, this.tileheight
-		);
+	);
 }
