@@ -148,19 +148,6 @@ function addAdditionalfunctionsToCtx(ctx) {
 }
 
 //#### src/js/lib/lib.js
-// Vector
-var Vector = function(dx, dy) {
-    this.dx = dx;
-    this.dy = dy;
-
-    this.size = Math.sqrt(dx * dx + dy * dy);
-
-    this.unit = {
-        x: this.dx / this.size,
-        y: this.dy / this.size
-    };
-};
-
 // FPS Counter module
 var fps = (function() {
     var times = [0];
@@ -274,19 +261,22 @@ function loadJSON() {
     }
 
     for (var i = 0; i < args.length; i++) {
-        (function(i) {
-            var request = new XMLHttpRequest();
-            request.open('GET', args[i], true);
-            request.send(null);
-            request.responseType = 'json';
-            request.onload = function() {
-                getData(this, i);
-            }
-            request.onerror = function() {
-                getError(i);
-            }
-        }(i));
+       makeRequest(i);
     }
+
+    function makeRequest(i) {
+        var request = new XMLHttpRequest();
+         request.open('GET', args[i], true);
+         request.send(null);
+         request.responseType = 'json';
+         request.onload = function() {
+             getData(this, i);
+         };
+         request.onerror = function() {
+             getError(i);
+         };
+    }
+
 
     return {
         then: function(callback) {
@@ -300,52 +290,28 @@ function loadJSON() {
     };
 }
 
-Math.sign = Math.sign || function(x) {
-    return x === 0 ? 0 : x / Math.abs(x);
-};
-
+/*
 function RectCollision(o1, o2) {
     if (o2.x < o1.x + o1.width && o2.y < o1.y + o1.height && o2.x + o2.width > o1.x && o2.y + o2.height > o1.y) {
         return true;
     }
     return false;
 }
+*/
 
+//#### src/js/lib/polyfill.js
+// JS Objects change
 
+Date.now = Date.now || function () {
+    return +new Date();
+};
+Math.sign = Math.sign || function(x) {
+    return x === 0 ? 0 : x / Math.abs(x);
+};
 Array.prototype.includes = Array.prototype.includes || function(x) {
     return this.indexOf(x) !== -1;
 };
 
-function shallowCopyTo(o1, o2) {
-    for (var name in o2) {
-        if (o2.hasOwnProperty(name)) {
-            o1[name] = o2[name];
-        }
-    }
-    return o1;
-}
-
-//#### src/js/lib/polyfill.js
-Date.now = Date.now || function () {
-    return +new Date();
-};
-
-
-//#### src/js/lib/transitions.js
-function screenToWorld(x, y) {
-    
-}
-
-function worldToScreen(x, y) {
-    
-}
-
-function relativate(x, y) {
-	return {
-		x: Math.floor(x - game._player.x - game._player.width / 2 + game._board.width / 2),
-		y: Math.floor(y - game._player.y - game._player.width / 2 + game._board.height / 2)
-	}
-} 
 
 //#### src/js/classes/ActiveObjectsManager.js
 function ActiveObjectsManager(canvas) {
@@ -447,7 +413,7 @@ _p.watch = function() {
     this._canvas.addEventListener('mouseleave', self._mouseLeaveCanvas.bind(self));
 };
 
-_p.unwatch = function(canvas) {
+_p.unwatch = function() {
     var self = this;
     window.removeEventListener('mousedown', self._mouseClick);
     this._canvas.removeEventListener('mousemove', self._mouseMove);
@@ -495,7 +461,7 @@ _p._mouseMove = function(e) {
     this._mousePos = c;
 };
 
-_p._mouseLeaveCanvas = function(e) {
+_p._mouseLeaveCanvas = function() {
     this._hover = null;
 };
 
@@ -640,7 +606,6 @@ _p._drawBackground = function(ao, aoStyle) {
 };
 
 _p._drawText = function(ao, aoStyle) {
-	var style = this._defaultStyle;
 	var text = aoStyle.innerText;
 
 	this._ctx.textBaseline = aoStyle.textBaseline;
@@ -692,7 +657,7 @@ _p.renderScene = function(scene) {
 
 //#### src/js/classes/Animation.js
 function Animation(options) {
-	extend(this, new EventEmitter);
+	extend(this, new EventEmitter());
 	options = options || {};
 	this._size = options.size;
 	this._createFrames(options);
@@ -701,6 +666,7 @@ function Animation(options) {
 	this._frameLooped = options.frameLooped || false;
 	this._frameDuration = options.frameDuration || 3;
 	this._priorytet = options.priorytet || 0;
+	this._audioLooped = options.audioLooped || false;
 }
 
 var _p = Animation.prototype;
@@ -708,14 +674,13 @@ var _p = Animation.prototype;
 _p.setAudio = function(audio) {
 	this._audio = audio.cloneNode();
 	this._audio.addEventListener('ended', this._onAudioEnded);
-	this._audioLooped = options.audioLooped || false;
-}
+};
 
 _p._onAudioEnded = function () {
 	if (this._audioLooped)
 		this._audio.play();
 	this._trigger('audioEnded');
-}
+};
 
 _p._createFrames = function (options) {
 
@@ -1115,12 +1080,11 @@ Board.prototype._removeScene = function(scene) {
 	this.redrawScenes();
 };
 
-Board.prototype.removeScenes = function(scene) {
+Board.prototype.removeScenes = function() {
 	for (var i = 0; i < this._scenes.length; i++) {
 		this._scenes[i].remove();
 	}
 	this._scenes.length = 0;
-	console.log(this._scenes);
 }
 
 Board.prototype.createWelcomeScene = function() {
@@ -1157,25 +1121,25 @@ Board.prototype.createWelcomeScene = function() {
 
 
 Board.prototype.createSettingsScene = function() {
-
-	var xhr2 = new XMLHttpRequest();
-	xhr2.onload = function() {
-		var style = $('style')[0];
-		style.innerHTML = this.response;
-		style.id = 'settings-style'
-		document.head.appendChild(style);
-	}
-	xhr2.open('GET', './html/settings/style.css');
-	xhr2.send();
-
+	var self = this;
 
 	var xhr = new XMLHttpRequest();
 	xhr.onload = function() {
 		var html = this.response;
-		var settingsGUI = new SettingsGUI(html);
-	}
+		self.settingsGUI = new SettingsGUI(html);
+	};
 	xhr.open("GET", 'html/settings/index.html');
 	xhr.send();
+	
+	var xhr2 = new XMLHttpRequest();	
+	xhr2.onload = function() {
+		var style = $('style')[0];
+		style.innerHTML = this.response;
+		style.id = 'settings-style';
+		document.head.appendChild(style);
+	};
+	xhr2.open('GET', './html/settings/style.css');
+	xhr2.send();
 };
 
 Board.prototype.createCreditsScene = function() {
@@ -1393,7 +1357,7 @@ function Game() {
 
 extend(Game.prototype, BgAudio.prototype);
 
-Game.prototype._loadAudio = function(callback) {
+Game.prototype._loadAudio = function() {
 	var self = this;
 	loadJSON('data/audio.json').then(function(music) {
 		// audio
@@ -1801,12 +1765,12 @@ function Scene(board, o) {
 	this._sortObjects();
 }
 
-Scene.prototype._setDimensions = function(board, o) {
+Scene.prototype._setDimensions = function (board, o) {
 	this._height = o.height || board.height;
 	this._width = o.width || board.width;
 };
 
-Scene.prototype._setOffset = function(board, o) {
+Scene.prototype._setOffset = function (board, o) {
 	this._left = o.left || board.width - o.right || 0;
 	this._top = o.top || board.width - o.bottom || 0;
 
@@ -1814,28 +1778,28 @@ Scene.prototype._setOffset = function(board, o) {
 		this._left = (board.width - this._width) / 2;
 	if (o.alignVertical)
 		this._top = (board.height - this._height) / 2;
-}
+};
 
-Scene.prototype.getBoard = function() {
+Scene.prototype.getBoard = function () {
 	return this._board;
 };
 
-Scene.prototype.addObject = function(objName, o) {
+Scene.prototype.addObject = function (objName, o) {
 	this._objects.push(new SceneObject(this, objName, o));
 	this._sortObjects();
 };
 
-Scene.prototype._sortObjects = function() {
+Scene.prototype._sortObjects = function () {
 	this._sortedObjects = [];
 	for (var objName in this._objects) {
 		this._sortedObjects.push(this._objects[objName]);
 	}
-	this._sortedObjects.sort(function(o1, o2) {
+	this._sortedObjects.sort(function (o1, o2) {
 		return o1._zIndex - o2._zIndex;
 	});
 };
 
-Scene.prototype.draw = function() {
+Scene.prototype.draw = function () {
 	if (this._bgColor) {
 		ctx.fillStyle = this._bgColor;
 		ctx.fillRect(this._left, this._top, this._width, this._height);
@@ -1847,7 +1811,7 @@ Scene.prototype.draw = function() {
 	}
 };
 
-Scene.prototype.attr = function() {
+Scene.prototype.attr = function () {
 	if (arguments.length === 1)
 		return this['_' + arguments[0]];
 	else {
@@ -1856,25 +1820,46 @@ Scene.prototype.attr = function() {
 	}
 };
 
-Scene.prototype.remove = function() {
+Scene.prototype.remove = function () {
 	for (var objName in this._objects) {
 		this._objects[objName].remove();
 	}
 };
 
-Scene.prototype.hide = function() {
+Scene.prototype.hide = function () {
 	this._isVivible = false;
 };
 
-Scene.prototype.show = function() {
+Scene.prototype.show = function () {
 	this._isVivible = true;
+};
+
+function SceneObject(_scene, objName, o) {
+	this._scene = _scene;
+	this._objName = objName;
+	this._hoverStyles = {};
+
+	this._addClassesStyles(o, objName);
+
+	this._setEventListeners(o, objName);
+
+	this._setDimensions(o);
+
+	this._setShape(o);
+
+	this._setBgImage(o);
+
+	this._zIndex = (o.zIndex || 0) + this._scene.attr('zIndex');
+
+	this._setText(o);
+
+	this._createActiveObjectFromSelf();
 }
 
-function SceneObject(_scene, _objName, o) {
-	var self = this;
-	this._scene = _scene;
-	this._objName = _objName;
-	this._hoverStyles = {};
+var _p = SceneObject.prototype;
+
+_p._addClassesStyles = function (o, class_name) {
+	ext(class_name);
 
 	function ext(class_name) {
 		if (class_name in styles) {
@@ -1886,8 +1871,36 @@ function SceneObject(_scene, _objName, o) {
 			}
 		}
 	}
-	ext(_objName);
+};
 
+_p._setEventListeners = function (o, objName) {
+
+	var self = this;
+
+	this._onClick = o.onClick && o.onClick.bind(this) || null;
+
+	if (objName + 'Hover' in styles || o.onHover || o.onBlur) {
+
+		this._setHoverStyle(objName + 'Hover');
+
+		this._onHover = function () {
+			o.onHover && o.onHover.call(self);
+			self._hover = true;
+			self._scene._trigger('dirt');
+		};
+
+		this._onBlur = function () {
+			o.onBlur && o.onBlur.call(self);
+			self._hover = false;
+			self._scene._trigger('dirt');
+		};
+	}
+};
+
+_p._setHoverStyle = function (class_name) {
+	var self = this;
+	extHover(class_name);
+	
 	function extHover(class_name) {
 		if (class_name in styles) {
 			for (var prop in styles[class_name]) {
@@ -1898,59 +1911,29 @@ function SceneObject(_scene, _objName, o) {
 			}
 		}
 	}
+};
 
-	if (_objName + 'Hover' in styles || o.onHover || o.onBlur) {
-
-		extHover(_objName + 'Hover')
-		console.log(this, this._hoverStyles);
-
-		this._onHover = function() {
-			o.onHover && o.onHover.call(self);
-			self._hover = true;
-			self._scene._trigger('dirt');
-		}
-		this._onBlur = function() {
-			o.onBlur && o.onBlur.call(self);
-			self._hover = false;
-			self._scene._trigger('dirt');
-		}
-	}
-
-	this._setDimensions(o);
-
+_p._setShape = function (o) {
 	this._shape = o.shape || 'rect';
 	this._cornerRadius = o.cornerRadius || 0;
 	this._bgColor = o.bgColor || '';
 	this._borderWidth = o.borderWidth || 0;
 	this._borderColor = o.color || o.borderColor || 'black';
+};
 
-	this._setBgImage(o);
-
-
-	this._zIndex = (o.zIndex || 0) + this._scene.attr('zIndex');
-
-	this._setText(o);
-
-	this._onClick = o.onClick && o.onClick.bind(this) || null;
-
-	this._createActiveObjectFromSelf();
-}
-
-var _p = SceneObject.prototype;
-
-_p._setBgImage = function(o) {
+_p._setBgImage = function (o) {
 	if (!o.bgImage)
 		return;
 
 	this._bgImage = o.bgImage;
 	this._imgWidth = o.imgWidth || o.bgImage.width;
 	this._imgHeight = o.imgHeight || o.bgImage.height;
-}
+};
 
 
-_p._setDimensions = function(o) {
+_p._setDimensions = function (o) {
 	this._left = (o.left || 0) + this._scene.attr('left');
-	this._top = (o.top || 0) + this._scene.attr('top')
+	this._top = (o.top || 0) + this._scene.attr('top');
 	this._width = o.width || this._scene.attr('width');
 	this._height = o.height || this._scene.attr('height');
 	if (o.alignCenter) {
@@ -1960,7 +1943,7 @@ _p._setDimensions = function(o) {
 		this._top += (this._scene.attr('height') - this._height) / 2;
 };
 
-_p._setText = function(o) {
+_p._setText = function (o) {
 	this._text = o.text || '';
 	if (!this._text)
 		return;
@@ -1977,7 +1960,7 @@ _p._setText = function(o) {
 
 
 
-_p._createActiveObjectFromSelf = function() {
+_p._createActiveObjectFromSelf = function () {
 	this._ao = activeObjects.add({
 		left: this._left,
 		top: this._top,
@@ -1991,44 +1974,50 @@ _p._createActiveObjectFromSelf = function() {
 	});
 };
 
-_p.draw = function() {
+_p.draw = function () {
 	var o = extend({}, this);
-	if (o._hover) {
-		extend(o, o._hoverStyles);
-	}
+	
+	o._hover && extend(o, o._hoverStyles);
+	
+	(o._bgColor || o._borderWidth > 0) && this._drawBackground(o);
 
-	if (o._bgColor || o._borderWidth > 0) {
-		ctx.lineWidth = o._borderWidth;
-		ctx.strokeStyle = o._borderColor;
-		ctx.fillStyle = o._bgColor;
+	o._bgImage && this._drawBgImage(o);
 
-		var isFill = !!o._bgColor;
-		var isStroke = (o._borderWidth > 0);
+	o._text && this._drawText(o);
+};
 
-		if (o._shape === 'rect') {
-			ctx.roundRect(o._left, o._top, o._width, o._height, o._cornerRadius, isFill, isStroke)
-		}
-	}
-	if (o._bgImage) {
-		var img = o._scene.getBoard().imgManager.get(o._bgImage);
-		ctx.drawImage(img, o._left, o._top, o._imgWidth, o._imgHeight);
-	}
+_p._drawBackground = function (o) {
+	ctx.lineWidth = o._borderWidth;
+	ctx.strokeStyle = o._borderColor;
+	ctx.fillStyle = o._bgColor;
 
-	if (o._text) {
-		ctx.fillStyle = o._color;
-		ctx.font = o._fontSize + ' ' + o._fontFamily;
-		ctx.textBaseline = o._textBaseLine;
-		ctx.textAlign = o._textAlign;
-		ctx.fillText(o._text, o._textFromLeft, o._textFromTop)
+	var isFill = !!o._bgColor;
+	var isStroke = (o._borderWidth > 0);
+
+	if (o._shape === 'rect') {
+		ctx.roundRect(o._left, o._top, o._width, o._height, o._cornerRadius, isFill, isStroke);
 	}
 };
 
-_p.remove = function() {
+_p._drawBgImage = function (o) {
+	var img = o._scene.getBoard().imgManager.get(o._bgImage);
+	ctx.drawImage(img, o._left, o._top, o._imgWidth, o._imgHeight);
+};
+
+_p._drawText = function (o) {
+	ctx.fillStyle = o._color;
+	ctx.font = o._fontSize + ' ' + o._fontFamily;
+	ctx.textBaseline = o._textBaseLine;
+	ctx.textAlign = o._textAlign;
+	ctx.fillText(o._text, o._textFromLeft, o._textFromTop);
+};
+
+_p.remove = function () {
 	this._ao && this._ao.remove();
 	delete this._scene[this._objName];
 };
 
-_p.attr = function() {
+_p.attr = function () {
 	if (arguments.length === 1)
 		return this['_' + arguments[0]];
 	else {
@@ -2176,7 +2165,7 @@ _p.setDefaultOptions = function () {
 	// Can be stored in external JSON file
 	var options = this._options = {
 		AUDIO_VOLUME: {
-			value: 1,	
+			value: 1,
 			valueType: 'number',
 			settingsType: 'audio',
 			inputType: 'range',
@@ -2199,25 +2188,6 @@ _p.getAssignments = function () {
 	return this._assignments;
 };
 
-_p.save = function () {
-	var values = {};
-	for (var propName in this._options) {
-		values[propName] = this._options[propName].value;
-	};
-
-	var data = JSON.stringify(values);
-	localStorage.setItem('Warrior-settings', data);
-};
-
-_p._loadSettingsFromStorage = function () {
-	var data = localStorage.getItem('Warrior-settings') || '{}';
-	var storageOptions = JSON.parse(data);
-
-	for (var propName in storageOptions) {
-		this._options[propName].value = storageOptions[propName];
-	}
-};
-
 _p.getPropValue = function (property) {
 	console.log(property);
 	return this._options[property].value;
@@ -2228,23 +2198,43 @@ _p.getAll = function () {
 };
 
 _p.setPropValue = function (property, value) {
-	console.log(property, value)
 	var op = this._options[property];
-	console.log(op);
-	if (op.valueType === 'number')
+	if (op.valueType === 'number') 
 		value = Number(value);
 
 	if (op.valueType === 'boolean') {
-	console.log(value);
-		
-		value = (value === 'true' || value === true || value === 1 || value === '1');
-	console.log(value);
-	
+
+		value = value === 'true' || 
+			value === true ||
+			value === 1 ||
+		 	value === '1';
+
 	}
 
 	this._options[property].value = value;
-	this.save();
+	this._save();
 	this._trigger('change', property, value);
+};
+
+_p._loadSettingsFromStorage = function () {
+	var data = localStorage.getItem('Warrior-settings') || '{}';
+	var storageOptions = JSON.parse(data);
+
+	for (var propName in storageOptions) {
+		if (propName in this._options) {
+			this._options[propName].value = storageOptions[propName];
+		}
+	}
+};
+
+_p._save = function () {
+	var values = {};
+	for (var propName in this._options) {
+		values[propName] = this._options[propName].value;
+	}
+
+	var data = JSON.stringify(values);
+	localStorage.setItem('Warrior-settings', data);
 };
 
 //#### src/js/classes/SettingsGUI.js
@@ -2466,14 +2456,14 @@ World.prototype._loadData = function() {
 			self._createMapFromImportedData(map.layers);
 
 			for (var i = 0; i < map.tilesets.length; i++) {
-				self._tileSets.push(new TileSet(map.tilesets[i]))
+				self._tileSets.push(new TileSet(map.tilesets[i]));
 			}
 
 			self._createStaticObjects(map, self);
 
 			self._trigger('loaded');
 		});
-}
+};
 
 World.prototype._createMapFromImportedData = function(layers) {
 	this._map = createArray(layers.length, this.width, this.width);
@@ -2488,7 +2478,7 @@ World.prototype._createMapFromImportedData = function(layers) {
 			}
 		}
 	}
-}
+};
 
 World.prototype.drawLayers = function() {
 
@@ -2505,13 +2495,13 @@ World.prototype.drawLayers = function() {
 					var screenY = relPosition.y;
 
 					// UWAGA - 0
-					this._tileSets[0].draw(screenX, screenY, l.data[this.width * y + x])
+					this._tileSets[0].draw(screenX, screenY, l.data[this.width * y + x]);
 				}
 
 			}
 		}
 	}
-}
+};
 
 World.prototype._calculateMapEdges = function() {
 	var startX = Math.floor((game._player.x - game._board.width / 2) / this.outputTileWidth - 1);
@@ -2525,13 +2515,13 @@ World.prototype._calculateMapEdges = function() {
 		endX: Math.min(this.width, endX),
 		endY: Math.min(this.height, endY)
 	};
-}
+};
 
 World.prototype.drawObjects = function() {
 	this._objectsOnScreen = [];
 	this._objects.sort(function(o1, o2) {
 		if ((o1.y + o1.height) - (o2.y + o2.height) === 0) {
-			return o1.x - o2.x
+			return o1.x - o2.x;
 		} else return (o1.y + o1.height) - (o2.y + o2.height);
 	});
 	for (var i = 0; i < this._objects.length; i++) {
@@ -2539,7 +2529,8 @@ World.prototype.drawObjects = function() {
 		var object = this._objects[i];
 		object.draw();
 	}
-}
+};
+
 World.prototype._createStaticObjects = function(map) {
 	var i,
 		imageArray = [];
@@ -2566,11 +2557,11 @@ World.prototype._createStaticObjects = function(map) {
 					name: currentObject.name
 				});
 
-				this.addObject(go)
+				this.addObject(go);
 			}
 		}
 	}
-}
+};
 
 World.prototype.addObject = function(o) {
 	this._objects.push(o);
@@ -2599,7 +2590,7 @@ TileSet.prototype.load = function() {
 			this.images.push(i);
 		}
 	}
-}
+};
 
 TileSet.prototype.draw = function(screenX, screenY, index) {
 	index -= this.firstgid;
@@ -2610,4 +2601,11 @@ TileSet.prototype.draw = function(screenX, screenY, index) {
 	ctx.drawImage(this.img, left, top, this.tilewidth, this.tileheight,
 		screenX, screenY, this.tilewidth, this.tileheight
 	);
-}
+};
+
+function relativate(x, y) {
+	return {
+		x: Math.floor(x - game._player.x - game._player.width / 2 + game._board.width / 2),
+		y: Math.floor(y - game._player.y - game._player.width / 2 + game._board.height / 2)
+	};
+} 

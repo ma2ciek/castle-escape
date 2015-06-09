@@ -7,7 +7,7 @@ function Game() {
 
 extend(Game.prototype, BgAudio.prototype);
 
-Game.prototype._loadAudio = function(callback) {
+Game.prototype._loadAudio = function() {
 	var self = this;
 	loadJSON('data/audio.json').then(function(music) {
 		// audio

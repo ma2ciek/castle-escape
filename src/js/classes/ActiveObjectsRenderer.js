@@ -41,7 +41,6 @@ _p._drawBackground = function(ao, aoStyle) {
 };
 
 _p._drawText = function(ao, aoStyle) {
-	var style = this._defaultStyle;
 	var text = aoStyle.innerText;
 
 	this._ctx.textBaseline = aoStyle.textBaseline;

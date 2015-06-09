@@ -60,12 +60,11 @@ Board.prototype._removeScene = function(scene) {
 	this.redrawScenes();
 };
 
-Board.prototype.removeScenes = function(scene) {
+Board.prototype.removeScenes = function() {
 	for (var i = 0; i < this._scenes.length; i++) {
 		this._scenes[i].remove();
 	}
 	this._scenes.length = 0;
-	console.log(this._scenes);
 }
 
 Board.prototype.createWelcomeScene = function() {
@@ -102,25 +101,25 @@ Board.prototype.createWelcomeScene = function() {
 
 
 Board.prototype.createSettingsScene = function() {
-
-	var xhr2 = new XMLHttpRequest();
-	xhr2.onload = function() {
-		var style = $('style')[0];
-		style.innerHTML = this.response;
-		style.id = 'settings-style'
-		document.head.appendChild(style);
-	}
-	xhr2.open('GET', './html/settings/style.css');
-	xhr2.send();
-
+	var self = this;
 
 	var xhr = new XMLHttpRequest();
 	xhr.onload = function() {
 		var html = this.response;
-		var settingsGUI = new SettingsGUI(html);
-	}
+		self.settingsGUI = new SettingsGUI(html);
+	};
 	xhr.open("GET", 'html/settings/index.html');
 	xhr.send();
+	
+	var xhr2 = new XMLHttpRequest();	
+	xhr2.onload = function() {
+		var style = $('style')[0];
+		style.innerHTML = this.response;
+		style.id = 'settings-style';
+		document.head.appendChild(style);
+	};
+	xhr2.open('GET', './html/settings/style.css');
+	xhr2.send();
 };
 
 Board.prototype.createCreditsScene = function() {

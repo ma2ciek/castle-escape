@@ -1,5 +1,5 @@
 function Animation(options) {
-	extend(this, new EventEmitter);
+	extend(this, new EventEmitter());
 	options = options || {};
 	this._size = options.size;
 	this._createFrames(options);
@@ -8,6 +8,7 @@ function Animation(options) {
 	this._frameLooped = options.frameLooped || false;
 	this._frameDuration = options.frameDuration || 3;
 	this._priorytet = options.priorytet || 0;
+	this._audioLooped = options.audioLooped || false;
 }
 
 var _p = Animation.prototype;
@@ -15,14 +16,13 @@ var _p = Animation.prototype;
 _p.setAudio = function(audio) {
 	this._audio = audio.cloneNode();
 	this._audio.addEventListener('ended', this._onAudioEnded);
-	this._audioLooped = options.audioLooped || false;
-}
+};
 
 _p._onAudioEnded = function () {
 	if (this._audioLooped)
 		this._audio.play();
 	this._trigger('audioEnded');
-}
+};
 
 _p._createFrames = function (options) {
 

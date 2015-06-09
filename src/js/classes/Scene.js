@@ -21,12 +21,12 @@ function Scene(board, o) {
 	this._sortObjects();
 }
 
-Scene.prototype._setDimensions = function(board, o) {
+Scene.prototype._setDimensions = function (board, o) {
 	this._height = o.height || board.height;
 	this._width = o.width || board.width;
 };
 
-Scene.prototype._setOffset = function(board, o) {
+Scene.prototype._setOffset = function (board, o) {
 	this._left = o.left || board.width - o.right || 0;
 	this._top = o.top || board.width - o.bottom || 0;
 
@@ -34,28 +34,28 @@ Scene.prototype._setOffset = function(board, o) {
 		this._left = (board.width - this._width) / 2;
 	if (o.alignVertical)
 		this._top = (board.height - this._height) / 2;
-}
+};
 
-Scene.prototype.getBoard = function() {
+Scene.prototype.getBoard = function () {
 	return this._board;
 };
 
-Scene.prototype.addObject = function(objName, o) {
+Scene.prototype.addObject = function (objName, o) {
 	this._objects.push(new SceneObject(this, objName, o));
 	this._sortObjects();
 };
 
-Scene.prototype._sortObjects = function() {
+Scene.prototype._sortObjects = function () {
 	this._sortedObjects = [];
 	for (var objName in this._objects) {
 		this._sortedObjects.push(this._objects[objName]);
 	}
-	this._sortedObjects.sort(function(o1, o2) {
+	this._sortedObjects.sort(function (o1, o2) {
 		return o1._zIndex - o2._zIndex;
 	});
 };
 
-Scene.prototype.draw = function() {
+Scene.prototype.draw = function () {
 	if (this._bgColor) {
 		ctx.fillStyle = this._bgColor;
 		ctx.fillRect(this._left, this._top, this._width, this._height);
@@ -67,7 +67,7 @@ Scene.prototype.draw = function() {
 	}
 };
 
-Scene.prototype.attr = function() {
+Scene.prototype.attr = function () {
 	if (arguments.length === 1)
 		return this['_' + arguments[0]];
 	else {
@@ -76,25 +76,46 @@ Scene.prototype.attr = function() {
 	}
 };
 
-Scene.prototype.remove = function() {
+Scene.prototype.remove = function () {
 	for (var objName in this._objects) {
 		this._objects[objName].remove();
 	}
 };
 
-Scene.prototype.hide = function() {
+Scene.prototype.hide = function () {
 	this._isVivible = false;
 };
 
-Scene.prototype.show = function() {
+Scene.prototype.show = function () {
 	this._isVivible = true;
+};
+
+function SceneObject(_scene, objName, o) {
+	this._scene = _scene;
+	this._objName = objName;
+	this._hoverStyles = {};
+
+	this._addClassesStyles(o, objName);
+
+	this._setEventListeners(o, objName);
+
+	this._setDimensions(o);
+
+	this._setShape(o);
+
+	this._setBgImage(o);
+
+	this._zIndex = (o.zIndex || 0) + this._scene.attr('zIndex');
+
+	this._setText(o);
+
+	this._createActiveObjectFromSelf();
 }
 
-function SceneObject(_scene, _objName, o) {
-	var self = this;
-	this._scene = _scene;
-	this._objName = _objName;
-	this._hoverStyles = {};
+var _p = SceneObject.prototype;
+
+_p._addClassesStyles = function (o, class_name) {
+	ext(class_name);
 
 	function ext(class_name) {
 		if (class_name in styles) {
@@ -106,8 +127,36 @@ function SceneObject(_scene, _objName, o) {
 			}
 		}
 	}
-	ext(_objName);
+};
 
+_p._setEventListeners = function (o, objName) {
+
+	var self = this;
+
+	this._onClick = o.onClick && o.onClick.bind(this) || null;
+
+	if (objName + 'Hover' in styles || o.onHover || o.onBlur) {
+
+		this._setHoverStyle(objName + 'Hover');
+
+		this._onHover = function () {
+			o.onHover && o.onHover.call(self);
+			self._hover = true;
+			self._scene._trigger('dirt');
+		};
+
+		this._onBlur = function () {
+			o.onBlur && o.onBlur.call(self);
+			self._hover = false;
+			self._scene._trigger('dirt');
+		};
+	}
+};
+
+_p._setHoverStyle = function (class_name) {
+	var self = this;
+	extHover(class_name);
+	
 	function extHover(class_name) {
 		if (class_name in styles) {
 			for (var prop in styles[class_name]) {
@@ -118,59 +167,29 @@ function SceneObject(_scene, _objName, o) {
 			}
 		}
 	}
+};
 
-	if (_objName + 'Hover' in styles || o.onHover || o.onBlur) {
-
-		extHover(_objName + 'Hover')
-		console.log(this, this._hoverStyles);
-
-		this._onHover = function() {
-			o.onHover && o.onHover.call(self);
-			self._hover = true;
-			self._scene._trigger('dirt');
-		}
-		this._onBlur = function() {
-			o.onBlur && o.onBlur.call(self);
-			self._hover = false;
-			self._scene._trigger('dirt');
-		}
-	}
-
-	this._setDimensions(o);
-
+_p._setShape = function (o) {
 	this._shape = o.shape || 'rect';
 	this._cornerRadius = o.cornerRadius || 0;
 	this._bgColor = o.bgColor || '';
 	this._borderWidth = o.borderWidth || 0;
 	this._borderColor = o.color || o.borderColor || 'black';
+};
 
-	this._setBgImage(o);
-
-
-	this._zIndex = (o.zIndex || 0) + this._scene.attr('zIndex');
-
-	this._setText(o);
-
-	this._onClick = o.onClick && o.onClick.bind(this) || null;
-
-	this._createActiveObjectFromSelf();
-}
-
-var _p = SceneObject.prototype;
-
-_p._setBgImage = function(o) {
+_p._setBgImage = function (o) {
 	if (!o.bgImage)
 		return;
 
 	this._bgImage = o.bgImage;
 	this._imgWidth = o.imgWidth || o.bgImage.width;
 	this._imgHeight = o.imgHeight || o.bgImage.height;
-}
+};
 
 
-_p._setDimensions = function(o) {
+_p._setDimensions = function (o) {
 	this._left = (o.left || 0) + this._scene.attr('left');
-	this._top = (o.top || 0) + this._scene.attr('top')
+	this._top = (o.top || 0) + this._scene.attr('top');
 	this._width = o.width || this._scene.attr('width');
 	this._height = o.height || this._scene.attr('height');
 	if (o.alignCenter) {
@@ -180,7 +199,7 @@ _p._setDimensions = function(o) {
 		this._top += (this._scene.attr('height') - this._height) / 2;
 };
 
-_p._setText = function(o) {
+_p._setText = function (o) {
 	this._text = o.text || '';
 	if (!this._text)
 		return;
@@ -197,7 +216,7 @@ _p._setText = function(o) {
 
 
 
-_p._createActiveObjectFromSelf = function() {
+_p._createActiveObjectFromSelf = function () {
 	this._ao = activeObjects.add({
 		left: this._left,
 		top: this._top,
@@ -211,44 +230,50 @@ _p._createActiveObjectFromSelf = function() {
 	});
 };
 
-_p.draw = function() {
+_p.draw = function () {
 	var o = extend({}, this);
-	if (o._hover) {
-		extend(o, o._hoverStyles);
-	}
+	
+	o._hover && extend(o, o._hoverStyles);
+	
+	(o._bgColor || o._borderWidth > 0) && this._drawBackground(o);
 
-	if (o._bgColor || o._borderWidth > 0) {
-		ctx.lineWidth = o._borderWidth;
-		ctx.strokeStyle = o._borderColor;
-		ctx.fillStyle = o._bgColor;
+	o._bgImage && this._drawBgImage(o);
 
-		var isFill = !!o._bgColor;
-		var isStroke = (o._borderWidth > 0);
+	o._text && this._drawText(o);
+};
 
-		if (o._shape === 'rect') {
-			ctx.roundRect(o._left, o._top, o._width, o._height, o._cornerRadius, isFill, isStroke)
-		}
-	}
-	if (o._bgImage) {
-		var img = o._scene.getBoard().imgManager.get(o._bgImage);
-		ctx.drawImage(img, o._left, o._top, o._imgWidth, o._imgHeight);
-	}
+_p._drawBackground = function (o) {
+	ctx.lineWidth = o._borderWidth;
+	ctx.strokeStyle = o._borderColor;
+	ctx.fillStyle = o._bgColor;
 
-	if (o._text) {
-		ctx.fillStyle = o._color;
-		ctx.font = o._fontSize + ' ' + o._fontFamily;
-		ctx.textBaseline = o._textBaseLine;
-		ctx.textAlign = o._textAlign;
-		ctx.fillText(o._text, o._textFromLeft, o._textFromTop)
+	var isFill = !!o._bgColor;
+	var isStroke = (o._borderWidth > 0);
+
+	if (o._shape === 'rect') {
+		ctx.roundRect(o._left, o._top, o._width, o._height, o._cornerRadius, isFill, isStroke);
 	}
 };
 
-_p.remove = function() {
+_p._drawBgImage = function (o) {
+	var img = o._scene.getBoard().imgManager.get(o._bgImage);
+	ctx.drawImage(img, o._left, o._top, o._imgWidth, o._imgHeight);
+};
+
+_p._drawText = function (o) {
+	ctx.fillStyle = o._color;
+	ctx.font = o._fontSize + ' ' + o._fontFamily;
+	ctx.textBaseline = o._textBaseLine;
+	ctx.textAlign = o._textAlign;
+	ctx.fillText(o._text, o._textFromLeft, o._textFromTop);
+};
+
+_p.remove = function () {
 	this._ao && this._ao.remove();
 	delete this._scene[this._objName];
 };
 
-_p.attr = function() {
+_p.attr = function () {
 	if (arguments.length === 1)
 		return this['_' + arguments[0]];
 	else {

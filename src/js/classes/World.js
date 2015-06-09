@@ -24,14 +24,14 @@ World.prototype._loadData = function() {
 			self._createMapFromImportedData(map.layers);
 
 			for (var i = 0; i < map.tilesets.length; i++) {
-				self._tileSets.push(new TileSet(map.tilesets[i]))
+				self._tileSets.push(new TileSet(map.tilesets[i]));
 			}
 
 			self._createStaticObjects(map, self);
 
 			self._trigger('loaded');
 		});
-}
+};
 
 World.prototype._createMapFromImportedData = function(layers) {
 	this._map = createArray(layers.length, this.width, this.width);
@@ -46,7 +46,7 @@ World.prototype._createMapFromImportedData = function(layers) {
 			}
 		}
 	}
-}
+};
 
 World.prototype.drawLayers = function() {
 
@@ -63,13 +63,13 @@ World.prototype.drawLayers = function() {
 					var screenY = relPosition.y;
 
 					// UWAGA - 0
-					this._tileSets[0].draw(screenX, screenY, l.data[this.width * y + x])
+					this._tileSets[0].draw(screenX, screenY, l.data[this.width * y + x]);
 				}
 
 			}
 		}
 	}
-}
+};
 
 World.prototype._calculateMapEdges = function() {
 	var startX = Math.floor((game._player.x - game._board.width / 2) / this.outputTileWidth - 1);
@@ -83,13 +83,13 @@ World.prototype._calculateMapEdges = function() {
 		endX: Math.min(this.width, endX),
 		endY: Math.min(this.height, endY)
 	};
-}
+};
 
 World.prototype.drawObjects = function() {
 	this._objectsOnScreen = [];
 	this._objects.sort(function(o1, o2) {
 		if ((o1.y + o1.height) - (o2.y + o2.height) === 0) {
-			return o1.x - o2.x
+			return o1.x - o2.x;
 		} else return (o1.y + o1.height) - (o2.y + o2.height);
 	});
 	for (var i = 0; i < this._objects.length; i++) {
@@ -97,7 +97,8 @@ World.prototype.drawObjects = function() {
 		var object = this._objects[i];
 		object.draw();
 	}
-}
+};
+
 World.prototype._createStaticObjects = function(map) {
 	var i,
 		imageArray = [];
@@ -124,11 +125,11 @@ World.prototype._createStaticObjects = function(map) {
 					name: currentObject.name
 				});
 
-				this.addObject(go)
+				this.addObject(go);
 			}
 		}
 	}
-}
+};
 
 World.prototype.addObject = function(o) {
 	this._objects.push(o);
@@ -157,7 +158,7 @@ TileSet.prototype.load = function() {
 			this.images.push(i);
 		}
 	}
-}
+};
 
 TileSet.prototype.draw = function(screenX, screenY, index) {
 	index -= this.firstgid;
@@ -168,4 +169,11 @@ TileSet.prototype.draw = function(screenX, screenY, index) {
 	ctx.drawImage(this.img, left, top, this.tilewidth, this.tileheight,
 		screenX, screenY, this.tilewidth, this.tileheight
 	);
-}
+};
+
+function relativate(x, y) {
+	return {
+		x: Math.floor(x - game._player.x - game._player.width / 2 + game._board.width / 2),
+		y: Math.floor(y - game._player.y - game._player.width / 2 + game._board.height / 2)
+	};
+} 

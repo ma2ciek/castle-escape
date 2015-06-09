@@ -97,7 +97,7 @@ _p.watch = function() {
     this._canvas.addEventListener('mouseleave', self._mouseLeaveCanvas.bind(self));
 };
 
-_p.unwatch = function(canvas) {
+_p.unwatch = function() {
     var self = this;
     window.removeEventListener('mousedown', self._mouseClick);
     this._canvas.removeEventListener('mousemove', self._mouseMove);
@@ -145,7 +145,7 @@ _p._mouseMove = function(e) {
     this._mousePos = c;
 };
 
-_p._mouseLeaveCanvas = function(e) {
+_p._mouseLeaveCanvas = function() {
     this._hover = null;
 };
 

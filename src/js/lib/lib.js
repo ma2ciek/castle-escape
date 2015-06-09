@@ -1,16 +1,3 @@
-// Vector
-var Vector = function(dx, dy) {
-    this.dx = dx;
-    this.dy = dy;
-
-    this.size = Math.sqrt(dx * dx + dy * dy);
-
-    this.unit = {
-        x: this.dx / this.size,
-        y: this.dy / this.size
-    };
-};
-
 // FPS Counter module
 var fps = (function() {
     var times = [0];
@@ -124,19 +111,22 @@ function loadJSON() {
     }
 
     for (var i = 0; i < args.length; i++) {
-        (function(i) {
-            var request = new XMLHttpRequest();
-            request.open('GET', args[i], true);
-            request.send(null);
-            request.responseType = 'json';
-            request.onload = function() {
-                getData(this, i);
-            }
-            request.onerror = function() {
-                getError(i);
-            }
-        }(i));
+       makeRequest(i);
     }
+
+    function makeRequest(i) {
+        var request = new XMLHttpRequest();
+         request.open('GET', args[i], true);
+         request.send(null);
+         request.responseType = 'json';
+         request.onload = function() {
+             getData(this, i);
+         };
+         request.onerror = function() {
+             getError(i);
+         };
+    }
+
 
     return {
         then: function(callback) {
@@ -150,27 +140,11 @@ function loadJSON() {
     };
 }
 
-Math.sign = Math.sign || function(x) {
-    return x === 0 ? 0 : x / Math.abs(x);
-};
-
+/*
 function RectCollision(o1, o2) {
     if (o2.x < o1.x + o1.width && o2.y < o1.y + o1.height && o2.x + o2.width > o1.x && o2.y + o2.height > o1.y) {
         return true;
     }
     return false;
 }
-
-
-Array.prototype.includes = Array.prototype.includes || function(x) {
-    return this.indexOf(x) !== -1;
-};
-
-function shallowCopyTo(o1, o2) {
-    for (var name in o2) {
-        if (o2.hasOwnProperty(name)) {
-            o1[name] = o2[name];
-        }
-    }
-    return o1;
-}
+*/

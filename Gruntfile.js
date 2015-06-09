@@ -173,5 +173,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-jscs");
 
     grunt.registerTask('prod', ['clean:prod', 'concat', 'uglify', 'jshint:prod', 'copy:prod']);
-    grunt.registerTask('default', ['concat', 'jshint:dev', 'clean:dev', 'copy:dev'])
+    grunt.registerTask('default', ['concat', 'jshint:dev', 'clean:dev', 'copy:dev']);
+
 };
