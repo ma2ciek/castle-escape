@@ -7,6 +7,7 @@ function World(game) {
 	this._objectsOnScreen = [];
 	this._objectTypes = [];
 	this._loadData();
+	this._turbulenceManager = new TurbulencesManager();
 	extend(this, new EventEmitter());
 }
 
@@ -58,7 +59,7 @@ World.prototype.drawLayers = function() {
 			for (var y = mapEdges.startY; y < mapEdges.endY; y++) {
 				for (var x = mapEdges.endX - 1; x >= mapEdges.startX; x--) {
 
-					var relPosition = relativate(x * this.outputTileWidth, y * this.outputTileHeight);
+					var relPosition = this.relativate(x * this.outputTileWidth, y * this.outputTileHeight);
 					var screenX = relPosition.x;
 					var screenY = relPosition.y;
 
@@ -135,6 +136,14 @@ World.prototype.addObject = function(o) {
 	this._objects.push(o);
 };
 
+World.prototype.relativate = function (x, y) {
+	var turbulences = this._turbulenceManager.getDelta();
+	return {
+		x: Math.floor(x + turbulences.x - game._player.x - game._player.width / 2 + game._board.width / 2),
+		y: Math.floor(y + turbulences.y - game._player.y - game._player.height / 2 + game._board.height / 2)
+	};
+};
+
 
 
 /***** TILESET CLASS *****/
@@ -170,10 +179,3 @@ TileSet.prototype.draw = function(screenX, screenY, index) {
 		screenX, screenY, this.tilewidth, this.tileheight
 	);
 };
-
-function relativate(x, y) {
-	return {
-		x: Math.floor(x - game._player.x - game._player.width / 2 + game._board.width / 2),
-		y: Math.floor(y - game._player.y - game._player.width / 2 + game._board.height / 2)
-	};
-} 

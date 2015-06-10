@@ -10,7 +10,8 @@ function GameObject(_world, properties) {
 GameObject.prototype.draw = function() {
 	var animation = this.animations[this.currentAnimationName];
 	
-	var relPos = relativate(this.x, this.y);
+	// Do poprawy
+	var relPos = game._world.relativate(this.x, this.y);
 	
 	var frame = animation.getCurrentFrame();
 	
