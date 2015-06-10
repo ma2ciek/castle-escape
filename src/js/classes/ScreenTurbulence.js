@@ -51,13 +51,13 @@ function Turbulence(time, altitude) {
 	this._x = 0;
 	this._y = 0;
 	this.setRandomValues();
-	this.vibrate();
+	this.vibrate(time);
 }
 _p = Turbulence.prototype;
 
-_p.vibrate = function() {
+_p.vibrate = function(time) {
 	if(user.vibrate && settings.getPropValue('vibration'))
-		user.vibrate(time * 60); 
+		user.vibrate(time * fps.get()); 
 };
 
 _p.setRandomValues = function () {

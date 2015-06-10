@@ -150,147 +150,154 @@ function addAdditionalfunctionsToCtx(ctx) {
 //#### src/js/lib/lib.js
 // FPS Counter module
 var fps = (function () {
-    var times = [0];
-    var timeSum = 0;
-    var lastTime = Date.now();
+   var times = [0];
+   var timeSum = 0;
+   var lastTime = Date.now();
+   var options = {
+      left: 0,
+      top: 0,
+      fontSize: 15,
+      fontFamily: "Verdana",
+      maxLength: 60,
+      fillStyle: 'black',
+      textBaseline: 'top',
+      textAlign: 'left',
+   };
 
-    // Default options
-    var options = {
-        left: 0,
-        top: 0,
-        fontSize: 15,
-        fontFamily: "Verdana",
-        maxLength: 60,
-        fillStyle: 'black',
-        textBaseline: 'top',
-        textAlign: 'left',
-    };
-
-    function draw(ctx, _fps) {
-        var o = options;
-        ctx.textAlign = o.textAlign;
-        ctx.textBaseline = o.textBaseline;
-        ctx.fillStyle = o.fillStyle;
-        ctx.font = o.fontSize + 'px ' + o.fontFamily;
-        ctx.fillText('FPS:' + _fps, o.left, o.top);
-    }
-
-    return {
-        count: function (ctx) {
-            var diff = Date.now() - lastTime;
-            lastTime = Date.now();
-
-            if (times.length > options.maxLength) timeSum -= times.pop();
-            times.unshift(diff);
-            timeSum += diff;
-            var _fps = 1000 / (timeSum / times.length) | 0;
-            draw(ctx, _fps);
-        },
-
-        // changing default options
-        set: function (o) {
-            if (typeof o !== 'object') {
-                throw new Error("Wrong data type");
+   function setOptions(o) {
+      if (typeof o !== 'object') {
+         throw new Error("Wrong data type");
+      }
+      for (var i in o) {
+         if (options.hasOwnProperty(i)) {
+            if (o[i] !== undefined) {
+               options[i] = o[i];
             }
-            for (var i in o) {
-                if (options.hasOwnProperty(i)) {
-                    if (o[i] !== undefined) {
-                        options[i] = o[i];
-                    }
-                } else {
-                    throw new Error("Wrong option name");
-                }
-            }
-        }
-    };
+         } else {
+            throw new Error("Wrong option name");
+         }
+      }
+   }
+
+   function getFPS() {
+      return 1000 / (timeSum / times.length) | 0;
+   }
+
+   function count(ctx) {
+      nextStage();
+      draw(ctx, getFPS());
+   }
+
+   function nextStage() {
+      var diff = Date.now() - lastTime;
+      lastTime = Date.now();
+      if (times.length > options.maxLength) timeSum -= times.pop();
+      times.unshift(diff);
+      timeSum += diff;
+   }
+
+   function draw(ctx, _fps) {
+      var o = options;
+      ctx.textAlign = o.textAlign;
+      ctx.textBaseline = o.textBaseline;
+      ctx.fillStyle = o.fillStyle;
+      ctx.font = o.fontSize + 'px ' + o.fontFamily;
+      ctx.fillText('FPS:' + _fps, o.left, o.top);
+   }
+
+   return {
+      get: getFPS,
+      set: setOptions,
+      count: count,
+   };
 })();
 
 function createArray(length) {
-    var array = new Array(length || 0);
-    var i = length;
+   var array = new Array(length || 0);
+   var i = length;
 
-    if (arguments.length > 1) {
-        var args = [].slice.call(arguments, 1);
-        while (i--) array[length - 1 - i] = createArray.apply(this, args);
-    }
-    return array;
+   if (arguments.length > 1) {
+      var args = [].slice.call(arguments, 1);
+      while (i--) array[length - 1 - i] = createArray.apply(this, args);
+   }
+   return array;
 }
 
 
 function extend(dest) {
-    var objects = Array.prototype.splice.call(arguments, 1);
-    for (var i = 0; i < objects.length; i++) {
-        var o = objects[i];
-        for (var prop in o) {
-            dest[prop] = o[prop];
-        }
-    }
-    return dest;
+   var objects = Array.prototype.splice.call(arguments, 1);
+   for (var i = 0; i < objects.length; i++) {
+      var o = objects[i];
+      for (var prop in o) {
+         dest[prop] = o[prop];
+      }
+   }
+   return dest;
 }
 
 
 function loadJSON() {
-    var fail = [],
-        args = [].slice.call(arguments),
-        success = new Array(args.length),
-        onSuccess = null,
-        onFail = null,
-        counter = args.length;
+   var fail = [],
+      args = [].slice.call(arguments),
+      success = new Array(args.length),
+      onSuccess = null,
+      onFail = null,
+      counter = args.length;
 
-    function count() {
-        if (--counter === 0) {
-            if (fail.length === 0) {
-                onSuccess && onSuccess.apply(this, success);
-            } else onFail && onFail.apply(this, fail);
-        }
-    }
+   function count() {
+      if (--counter === 0) {
+         if (fail.length === 0) {
+            onSuccess && onSuccess.apply(this, success);
+         } else onFail && onFail.apply(this, fail);
+      }
+   }
 
-    function getData(request, i) {
-        if (request.status === 200) {
-            // Success
-            var data = request.response;
-            success[i] = data;
-            count();
-        } else
-            getError(i);
-    }
+   function getData(request, i) {
+      if (request.status === 200) {
+         // Success
+         var data = request.response;
+         success[i] = data;
+         count();
+      } else
+         getError(i);
+   }
 
-    function getError(i) {
-        fail.push(args[i]);
-        count();
-    }
+   function getError(i) {
+      fail.push(args[i]);
+      count();
+   }
 
-    for (var i = 0; i < args.length; i++) {
-        makeRequest(i);
-    }
+   for (var i = 0; i < args.length; i++) {
+      makeRequest(i);
+   }
 
-    function makeRequest(i) {
-        var request = new XMLHttpRequest();
-        request.open('GET', args[i], true);
-        request.send(null);
-        request.responseType = 'json';
-        request.onload = function () {
-            getData(this, i);
-        };
-        request.onerror = function () {
-            getError(i);
-        };
-    }
+   function makeRequest(i) {
+      var request = new XMLHttpRequest();
+      request.open('GET', args[i], true);
+      request.send(null);
+      request.responseType = 'json';
+      request.onload = function () {
+         getData(this, i);
+      };
+      request.onerror = function () {
+         getError(i);
+      };
+   }
 
-    function successCallback(callback) {
-        onSuccess = callback;
-        return this;
-    }
+   function successCallback(callback) {
+      onSuccess = callback;
+      return this;
+   }
 
-    function failCallback(callback) {
-        onFail = callback;
-        return this;
-    }
+   function failCallback(callback) {
+      onFail = callback;
+      return this;
+   }
 
-    return {
-        then: successCallback,
-        fail: failCallback
-    };
+   return {
+      then: successCallback,
+      fail: failCallback
+   };
 }
 
 /*
@@ -2348,9 +2355,14 @@ function Turbulence(time, altitude) {
 	this._x = 0;
 	this._y = 0;
 	this.setRandomValues();
+	this.vibrate(time);
 }
-
 _p = Turbulence.prototype;
+
+_p.vibrate = function(time) {
+	if(user.vibrate && settings.getPropValue('vibration'))
+		user.vibrate(time * fps.get()); 
+};
 
 _p.setRandomValues = function () {
 	this._timeLeft--;
@@ -2409,7 +2421,6 @@ _p.getAssignments = function () {
 };
 
 _p.getPropValue = function (property) {
-	console.log(property);
 	return this._options[property].value;
 };
 
@@ -2619,6 +2630,7 @@ function User() {
 	this.lang = navigator.language || navigator.userLanguage || 'pl';
 	this.cores = navigator.hardwareConcurrency || 4;
 	this.touchPoints = navigator.maxTouchPoints;
+	this.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
 	this.keys = {};
 	this._setEventListeners();
 	this.actions = {};

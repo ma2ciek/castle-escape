@@ -1,5 +1,5 @@
-/node_modules
-/.settings
-/dev
-/bin
-/prod
+node_modules/
+.settings/
+dev/
+bin/
+prod/
