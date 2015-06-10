@@ -149,7 +149,7 @@ function addAdditionalfunctionsToCtx(ctx) {
 
 //#### src/js/lib/lib.js
 // FPS Counter module
-var fps = (function() {
+var fps = (function () {
     var times = [0];
     var timeSum = 0;
     var lastTime = Date.now();
@@ -176,7 +176,7 @@ var fps = (function() {
     }
 
     return {
-        count: function(ctx) {
+        count: function (ctx) {
             var diff = Date.now() - lastTime;
             lastTime = Date.now();
 
@@ -188,7 +188,7 @@ var fps = (function() {
         },
 
         // changing default options
-        set: function(o) {
+        set: function (o) {
             if (typeof o !== 'object') {
                 throw new Error("Wrong data type");
             }
@@ -251,7 +251,7 @@ function loadJSON() {
             var data = request.response;
             success[i] = data;
             count();
-        } else 
+        } else
             getError(i);
     }
 
@@ -261,32 +261,35 @@ function loadJSON() {
     }
 
     for (var i = 0; i < args.length; i++) {
-       makeRequest(i);
+        makeRequest(i);
     }
 
     function makeRequest(i) {
         var request = new XMLHttpRequest();
-         request.open('GET', args[i], true);
-         request.send(null);
-         request.responseType = 'json';
-         request.onload = function() {
-             getData(this, i);
-         };
-         request.onerror = function() {
-             getError(i);
-         };
+        request.open('GET', args[i], true);
+        request.send(null);
+        request.responseType = 'json';
+        request.onload = function () {
+            getData(this, i);
+        };
+        request.onerror = function () {
+            getError(i);
+        };
     }
 
+    function successCallback(callback) {
+        onSuccess = callback;
+        return this;
+    }
+
+    function failCallback(callback) {
+        onFail = callback;
+        return this;
+    }
 
     return {
-        then: function(callback) {
-            onSuccess = callback;
-            return this;
-        },
-        fail: function(callback) {
-            onFail = callback;
-            return this;
-        }
+        then: successCallback,
+        fail: failCallback
     };
 }
 
@@ -931,7 +934,10 @@ _p.add = function (audioList) {
 		HTMLAudio.volume = this._globalVolume * HTMLAudio.localVolume;
 
 		if (audio.loop && !audio.once) {
-			HTMLAudio.addEventListener('ended', this.play);
+			HTMLAudio.addEventListener('ended', function() {
+				console.log(this);
+				this.play();
+			});
 		}
 		
 		var cpt = this._canplaythrough.bind(this, HTMLAudio, audio, name);
@@ -941,6 +947,8 @@ _p.add = function (audioList) {
 	}
 	return this;
 };
+
+
 
 _p._loadSettings = function() {
 	var settingsAssignments = {
@@ -1133,7 +1141,7 @@ Board.prototype.createSettingsScene = function() {
 	
 	var xhr2 = new XMLHttpRequest();	
 	xhr2.onload = function() {
-		var style = $('style')[0];
+		var style = document.createElement('style');
 		style.innerHTML = this.response;
 		style.id = 'settings-style';
 		document.head.appendChild(style);
@@ -1165,41 +1173,100 @@ Board.prototype.createCreditsScene = function() {
 };
 
 //#### src/js/classes/DocumentQuery.js
-function DocumentQuery() {
-	var elements = [];
-	if(typeof arguments[0] == 'object') {
-		for (var i = 0; i < arguments.length; i++) {
-			var arg = arguments[i];
+var $ = (function () {
+	function DocumentQuery() {
 
-			if(arg.length)
-				for(var j =0; j<arg.length; j++) {
-					elements = elements.concat(arg[j]);
-				}
-			else
-				elements = elements.concat(arg);
+		var elements = [];
+		if (typeof arguments[0] === 'object') {
+			for (var i = 0; i < arguments.length; i++) {
+				var arg = arguments[i];
+				if (arg === null || arg === undefined)
+					elements = [];
+
+				else if (arg.length)
+					for (var j = 0; j < arg.length; j++) {
+						elements = elements.concat(arg[j]);
+					}
+				else
+					elements = elements.concat(arg);
+			}
 		}
+		else {
+			var query = arguments[0];
+
+			console.log(query);
+
+			var creatingNewSelector = /<*>/;
+
+			if (creatingNewSelector.test(query)) {
+				var temp = document.createElement('template');
+				temp.innerHTML = query;
+				throw new Error(temp.content)
+				elements = temp.children || temp.content.children;
+			}
+
+			else
+				elements = getElementFromPattern(query);
+		}
+
 		return new DocumentObjectsManager(elements);
 	}
-	else {
-		var element = document.createElement(arguments[0]);
-		return new DocumentObjectsManager([element]);
-	}
-}
 
-var $ = DocumentQuery;
+	function getElementFromPattern(pattern) {
+		var arr = pattern.split(' ');
+		for (var i = 0; i < arr.length; i++) {
+			var el = arr[i];
+
+			var id = getId(el);
+			if(id)
+				return [document.getElementById(id)];
+
+			var classes = getClasses(el);
+			if(classes)
+				return document.getElementsByClassName(classes);
+
+			return document.getElementsByTagName(el);
+		}
+	}
+
+	function getId(el) {
+		var idPattern = /#[\w-]+/;
+		var match = el.match(idPattern)
+		if (match) {
+			var id = match[0].slice(1);
+			return id;
+		}
+	}
+
+	function getClasses(el) {
+		var classPattern = /\.[\w-]+/g;
+		var classes = el.match(classPattern);
+		if (!classes)
+			return;
+
+		for (var j = 0; j < classes.length; j++) {
+			classes[j] = classes[j].slice(1);
+		}
+
+		if (classes !== null && classes.length > 0) {
+			var classesQuery = classes.join(' ');
+			return classesQuery;
+		}
+	}
+
+	return DocumentQuery;
+})();
+
+
 
 function DocumentObjectsManager(elements) {
-	for(var i=0; i<elements.length; i++) {
+	for (var i = 0; i < elements.length; i++) {
 		this[i] = elements[i];
 	}
 	this._elements = elements;
 }
 
 var _p = DocumentObjectsManager.prototype;
-
-_p.valueOf = function() {
-	return this._elements;
-}
 
 _p._each = function (fn) {
 	for (var i = 0; i < this._elements.length; i++) {
@@ -1259,17 +1326,41 @@ _p.show = function (el, ms, callback) {
 	return this;
 };
 
-_p.html = function(html) {
+_p.html = function (html) {
 	this._each(function (el) {
 		el.innerHTML = html;
 	});
 	return this;
-}
+};
 
-_p.remove = function() {
+_p.append = function (html) {
+	var temp = document.createElement('template');
+	temp.innerHTML = html;
+	this._each(function (el) {
+		el.appendChild(temp.content);
+	});
+	return this;
+};
+
+_p.remove = function () {
 	this._each(function (el) {
 		el.outerHTML = '';
 	});
+};
+
+_p.eq = function (index) {
+	return this._elements[index];
+}
+
+_p.attr = function (attrName, value) {
+	if(value) {
+		this._each(function (el) {
+			el.setAttribute(attrName, value);
+		});
+		return this;
+	}
+	else 
+		return this._elements[0].getAttribute(attrName);
 }
 
 //#### src/js/classes/EventEmitter.js
@@ -1447,6 +1538,8 @@ Game.prototype._setNavigation = function() {
 		self._board.removeScenes();
 
 		activeObjects.removeAll();
+		
+		// removeSettings();
 
 		var hash = location.hash.length === 0 ? '' : location.hash.slice(1);
 		switch (hash) {
@@ -2239,9 +2332,7 @@ _p._save = function () {
 
 //#### src/js/classes/SettingsGUI.js
 function SettingsGUI(html) {
-	this._div = $('div').html(html)[0];
-	this._div.id = 'settings';
-	document.body.appendChild(this._div);
+	$('body').append(html);
 
 	this._actionsList = {};
 	this._assignments = settings.getAssignments();
@@ -2267,7 +2358,7 @@ _p._selectMenuClickHandler = function (e) {
 
 _p._loadContent = function (id) {
 	var self = this;
-	var dest = document.getElementById('right-panel');
+	var dest = $('#right-panel')[0];
 	$(dest).hide(100, function () {
 		dest.className = '';
 		$(dest).html('').addClass(id);
@@ -2286,24 +2377,24 @@ _p._loadContent = function (id) {
 
 _p._createSettings = function (settingsType) {
 	var options = settings.getAll();
-	var dest = document.getElementById('right-panel');
+	var dest = $('#right-panel')[0];
 
 	for (var optionName in options) {
-		if(!options.hasOwnProperty(optionName))
+		if (!options.hasOwnProperty(optionName))
 			continue;
-			
+
 		var op = options[optionName];
-		if(op.settingsType !== settingsType)
+		if (op.settingsType !== settingsType)
 			continue;
-		
-		var div = $('div').html(op.niceName)[0];
+
+		var div = $('<div>').html(op.niceName)[0];
 		dest.appendChild(div);
-		
-		var input = $('input')[0];
+
+		var input = $('<input>')[0];
 		dest.appendChild(input);
-		
+
 		input.type = op.inputType;
-		
+
 		switch (op.inputType) {
 			case 'range':
 				input.min = op.minValue;
@@ -2316,31 +2407,29 @@ _p._createSettings = function (settingsType) {
 				break;
 		}
 		input.onmouseup = inputChange;
-		input.setAttribute('data-option-name', optionName);		
+		input.setAttribute('data-option-name', optionName);
 	}
 
 	function inputChange() {
 		var optionName = this.getAttribute('data-option-name');
-		var value = this.value;	
+		var value = this.value;
 		settings.setPropValue(optionName, value);
 	}
 };
 
-
 _p._loadControls = function () {
-	var dest = document.getElementById('right-panel');
+	var dest = $('#right-panel')[0];
 	var list = this._assignments.getList();
 
 	for (var action in list) {
-		var outerDiv = $('div')[0];
+		var outerDiv = $('<div>')[0];
 		$(outerDiv).addClass('binding');
 
-		var div = $('div')[0];
+		var div = $('<div>')[0];
 		$(div).html(action).addClass('action-name');
 		outerDiv.appendChild(div);
 
-
-		div = $('div')[0];
+		div = $('<div>')[0];
 		this._actionsList[action] = div;
 		$(div).html(list[action]).addClass('key-name');
 		outerDiv.appendChild(div);
@@ -2351,50 +2440,51 @@ _p._loadControls = function () {
 
 _p._addBindingsEventListeners = function () {
 	var self = this;
-	window.addEventListener('click', function (e) {
-		self._clickHandler.call(self, e);
-	});
-	window.addEventListener('keydown', function (e) {
-		self._keydownHandler.call(self, e);
-	});
-	this._assignments._addEventListener('changeAssignnment', function (action) {
-		self._changeAssignmentHandler.call(self, action);
-	});
-};
 
-_p._removeEventListeners = function () {
-	// window.removeEventListener('click', clickHandler);
-	// window.removeEventListener('keydown', keydownHandler);
-	// this._assignments._removeEventListener('changeAssignnment', changeAssignmentHandler);
-};
+	window.addEventListener('click', clickHandler);
+	window.addEventListener('keydown', keydownHandler);
+	this._assignments._addEventListener('changeAssignnment', changeAssignmentHandler);
 
-_p._changeAssignmentHandler = function (action) {
-	this._actionsList[action].innerHTML = this._assignments.getList()[action];
-};
+	function clickHandler(e) {
+		var div = document.getElementsByClassName('key-name active')[0];
+		if (div)
+			$(div).removeClass('active');
 
-_p._clickHandler = function (e) {
-	var div = document.getElementsByClassName('key-name active')[0];
-	if (div)
-		$(div).removeClass('active');
+		if ($(e.target).hasClass('key-name')) {
+			var action = e.target.previousElementSibling.innerHTML;
 
-	if ($(e.target).hasClass('key-name')) {
-		var action = e.target.previousElementSibling.innerHTML;
+			self._assignments.setActiveBinding(action);
+			$(e.target).addClass('active');
+		}
+	}
 
-		this._assignments.setActiveBinding(action);
-		$(e.target).addClass('active');
+	function changeAssignmentHandler(action) {
+		self._actionsList[action].innerHTML = self._assignments.getList()[action];
+	}
+
+	function keydownHandler(e) {
+		var div = document.getElementsByClassName('key-name active')[0];
+		if (div) {
+			self._assignments.tryBind(e.keyCode);
+			e.preventDefault();
+		} else if (user.actions.Settings) {
+			removeEventListeners();
+			this.removeSettings();
+		}
+	}
+
+	function removeEventListeners() {
+		window.removeEventListener('click', clickHandler);
+		window.removeEventListener('keydown', keydownHandler);
+		self._assignments._removeEventListener('changeAssignnment', changeAssignmentHandler);
 	}
 };
 
-_p._keydownHandler = function (e) {
-	var div = document.getElementsByClassName('key-name active')[0];
-	if (div) {
-		this._assignments.tryBind(e.keyCode);
-		e.preventDefault();
-	} else if (user.actions.Settings) {
-		this._removeEventListeners();
-		$(document.getElementById('settings')).remove();
-		$(document.getElementById('settings-style')).remove();
-	}
+_p.removeSettings = function() {
+	//remove listeners
+	$('#settings').remove();
+	$('#settings-style').remove();
+	history.back();
 };
 
 //#### src/js/classes/User.js

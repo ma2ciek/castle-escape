@@ -97,6 +97,8 @@ Game.prototype._setNavigation = function() {
 		self._board.removeScenes();
 
 		activeObjects.removeAll();
+		
+		// removeSettings();
 
 		var hash = location.hash.length === 0 ? '' : location.hash.slice(1);
 		switch (hash) {

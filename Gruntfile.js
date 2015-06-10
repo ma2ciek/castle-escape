@@ -1,5 +1,5 @@
 /* global module */
-module.exports = function(grunt) {
+module.exports = function (grunt) {
     "use strict";
 
     grunt.initConfig({
@@ -32,9 +32,12 @@ module.exports = function(grunt) {
         },
 
         clean: {
+            all: [
+               'bin'
+            ],
             dev: [
                 'dev'
-            ], 
+            ],
             prod: [
                 'prod'
             ]
@@ -43,7 +46,7 @@ module.exports = function(grunt) {
         concat: {
             all: {
                 options: {
-                    process: function(src, filepath) {
+                    process: function (src, filepath) {
                         return '\n//#### ' + filepath + '\n' + src;
                     }
                 },
@@ -70,26 +73,26 @@ module.exports = function(grunt) {
                     dest: 'prod/img',
                     expand: true
                 }, {
-                    cwd: 'src/audio',
-                    src: '**/*',
-                    dest: 'prod/audio',
-                    expand: true
-                }, {
-                    cwd: 'src/data',
-                    src: '**/*',
-                    dest: 'prod/data',
-                    expand: true
-                }, {
-                    cwd: 'src/style',
-                    src: '**/*',
-                    dest: 'prod/style',
-                    expand: true
-                }, {
-                    cwd: 'src/bin/html',
-                    src: 'index.html',
-                    dest: 'prod',
-                    expand: true
-                }]
+                        cwd: 'src/audio',
+                        src: '**/*',
+                        dest: 'prod/audio',
+                        expand: true
+                    }, {
+                        cwd: 'src/data',
+                        src: '**/*',
+                        dest: 'prod/data',
+                        expand: true
+                    }, {
+                        cwd: 'src/style',
+                        src: '**/*',
+                        dest: 'prod/style',
+                        expand: true
+                    }, {
+                        cwd: 'src/bin/html',
+                        src: 'index.html',
+                        dest: 'prod',
+                        expand: true
+                    }]
             },
             dev: {
                 files: [{
@@ -98,39 +101,39 @@ module.exports = function(grunt) {
                     dest: 'dev/img',
                     expand: true
                 }, {
-                    cwd: 'src/audio',
-                    src: '**/*',
-                    dest: 'dev/audio',
-                    expand: true
-                }, {
-                    cwd: 'src/data',
-                    src: '**/*',
-                    dest: 'dev/data',
-                    expand: true
-                }, {
-                    cwd: 'src/style',
-                    src: '**/*',
-                    dest: 'dev/style',
-                    expand: true
-                }, {
-                    cwd: 'src/html',
-                    src: '**/*',
-                    dest: 'dev/html',
-                    expand: true
-                }, {
-                    cwd: 'bin',
-                    src: 'concat.js',
-                    dest: 'dev/js',
-                    rename: function(dest) {
-                        return dest + '/' + 'game.js';
-                    },
-                    expand: true
-                }, {
-                    cwd: 'src/bin/html',
-                    src: 'index.html',
-                    dest: 'dev',
-                    expand: true
-                }]
+                        cwd: 'src/audio',
+                        src: '**/*',
+                        dest: 'dev/audio',
+                        expand: true
+                    }, {
+                        cwd: 'src/data',
+                        src: '**/*',
+                        dest: 'dev/data',
+                        expand: true
+                    }, {
+                        cwd: 'src/style',
+                        src: '**/*',
+                        dest: 'dev/style',
+                        expand: true
+                    }, {
+                        cwd: 'src/html',
+                        src: '**/*',
+                        dest: 'dev/html',
+                        expand: true
+                    }, {
+                        cwd: 'bin',
+                        src: 'concat.js',
+                        dest: 'dev/js',
+                        rename: function (dest) {
+                            return dest + '/' + 'game.js';
+                        },
+                        expand: true
+                    }, {
+                        cwd: 'src/bin/html',
+                        src: 'index.html',
+                        dest: 'dev',
+                        expand: true
+                    }]
             }
         },
 
@@ -142,16 +145,16 @@ module.exports = function(grunt) {
                 expr: true, 
 
                 // Automatic Semicolon Insertion
-                asi: true, 
+                asi: true,
 
-                maxstatements: 15, 
+                maxstatements: 15,
 
-                maxdepth: 4, 
+                maxdepth: 4,
 
                 maxcomplexity: 10, 
 
                 // Prohibits arguments.callee && caller
-                noarg: true, 
+                noarg: true,
 
                 loopfunc: true,
 
@@ -174,5 +177,6 @@ module.exports = function(grunt) {
 
     grunt.registerTask('prod', ['clean:prod', 'concat', 'uglify', 'jshint:prod', 'copy:prod']);
     grunt.registerTask('default', ['concat', 'jshint:dev', 'clean:dev', 'copy:dev']);
+    grunt.registerTask('test', ['concat', 'qunit']);
 
 };

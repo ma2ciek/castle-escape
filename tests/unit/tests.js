@@ -8,18 +8,17 @@ test("truthy", function() {
 });
 */
 
-test("Game engine", function() {
-
-});
-
-test("AudioManager", function() {
-
-});
-
-test("ImageManager", function() {
-
-});
-
-test("Animation_API", function() {
-	
-})
+window.onload = function() {
+   test("Document Query", function() {
+      notEqual(window, undefined);
+      notEqual(document, undefined);
+      notEqual(document.createElement('div'), undefined);
+      
+      var div = $('<div>');
+      ok(1, 1);
+     // ok(div[0].children[0].nodeName === 'INPUT', 'Creating div and input');
+   });
+   
+   
+   
+}

@@ -1,5 +1,5 @@
 // FPS Counter module
-var fps = (function() {
+var fps = (function () {
     var times = [0];
     var timeSum = 0;
     var lastTime = Date.now();
@@ -26,7 +26,7 @@ var fps = (function() {
     }
 
     return {
-        count: function(ctx) {
+        count: function (ctx) {
             var diff = Date.now() - lastTime;
             lastTime = Date.now();
 
@@ -38,7 +38,7 @@ var fps = (function() {
         },
 
         // changing default options
-        set: function(o) {
+        set: function (o) {
             if (typeof o !== 'object') {
                 throw new Error("Wrong data type");
             }
@@ -101,7 +101,7 @@ function loadJSON() {
             var data = request.response;
             success[i] = data;
             count();
-        } else 
+        } else
             getError(i);
     }
 
@@ -111,32 +111,35 @@ function loadJSON() {
     }
 
     for (var i = 0; i < args.length; i++) {
-       makeRequest(i);
+        makeRequest(i);
     }
 
     function makeRequest(i) {
         var request = new XMLHttpRequest();
-         request.open('GET', args[i], true);
-         request.send(null);
-         request.responseType = 'json';
-         request.onload = function() {
-             getData(this, i);
-         };
-         request.onerror = function() {
-             getError(i);
-         };
+        request.open('GET', args[i], true);
+        request.send(null);
+        request.responseType = 'json';
+        request.onload = function () {
+            getData(this, i);
+        };
+        request.onerror = function () {
+            getError(i);
+        };
     }
 
+    function successCallback(callback) {
+        onSuccess = callback;
+        return this;
+    }
+
+    function failCallback(callback) {
+        onFail = callback;
+        return this;
+    }
 
     return {
-        then: function(callback) {
-            onSuccess = callback;
-            return this;
-        },
-        fail: function(callback) {
-            onFail = callback;
-            return this;
-        }
+        then: successCallback,
+        fail: failCallback
     };
 }
 

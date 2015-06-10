@@ -113,7 +113,7 @@ Board.prototype.createSettingsScene = function() {
 	
 	var xhr2 = new XMLHttpRequest();	
 	xhr2.onload = function() {
-		var style = $('style')[0];
+		var style = document.createElement('style');
 		style.innerHTML = this.response;
 		style.id = 'settings-style';
 		document.head.appendChild(style);

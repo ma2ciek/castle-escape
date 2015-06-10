@@ -22,7 +22,10 @@ _p.add = function (audioList) {
 		HTMLAudio.volume = this._globalVolume * HTMLAudio.localVolume;
 
 		if (audio.loop && !audio.once) {
-			HTMLAudio.addEventListener('ended', this.play);
+			HTMLAudio.addEventListener('ended', function() {
+				console.log(this);
+				this.play();
+			});
 		}
 		
 		var cpt = this._canplaythrough.bind(this, HTMLAudio, audio, name);
@@ -32,6 +35,8 @@ _p.add = function (audioList) {
 	}
 	return this;
 };
+
+
 
 _p._loadSettings = function() {
 	var settingsAssignments = {
