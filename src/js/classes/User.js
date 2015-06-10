@@ -2,6 +2,7 @@ function User() {
 	this.lang = navigator.language || navigator.userLanguage || 'pl';
 	this.cores = navigator.hardwareConcurrency || 4;
 	this.touchPoints = navigator.maxTouchPoints;
+	this.canVibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
 	this.keys = {};
 	this._setEventListeners();
 	this.actions = {};
