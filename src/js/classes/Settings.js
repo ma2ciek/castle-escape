@@ -37,7 +37,6 @@ _p.getAssignments = function () {
 };
 
 _p.getPropValue = function (property) {
-	console.log(property);
 	return this._options[property].value;
 };
 
