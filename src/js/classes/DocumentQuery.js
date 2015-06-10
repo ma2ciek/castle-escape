@@ -30,21 +30,43 @@ var $ = (function () {
 			}
 
 			else
-				elements = getElementsFromPattern(query, document);
+				elements = getElementsFromPattern(document, query);
 		}
 
 		return new DocumentObjectsManager(elements);
 	}
 
-	function getElementsFromPattern(pattern, context) {
+	function getElementsFromPattern(context, pattern) {
 		var queryElements = pattern.split(' ');
 		var queryEl = queryElements.shift();
 		if (!queryEl)
 			return [];
 
+		var elements = getElementsByClassesTagsAndIds(context, queryEl);
+		
+		if (queryElements.length === 0)
+			return elements;
+		
+		var newPattern = queryElements.join(' ');
+		return getMatchedChildren(newPattern, elements);
+	}
+	
+	function getMatchedChildren(pattern, elements) {
+		var matched = [];
+		
+		for (var i = 0; i < elements.length; i++) {
+			var newElems = getElementsFromPattern(elements[i], pattern);
+			for (var j = 0; j < newElems.length; j++) {
+				matched.push(newElems[j]);
+			}
+			matched = removeDuplicate(matched);
+		}
+		return matched;
+	}
+
+	function getElementsByClassesTagsAndIds(context, queryEl) {
 		var elements = [];
 		var id = getId(queryEl);
-		
 		if (id) {
 			var el = document.getElementById(id);
 			el && elements.push(el);
@@ -63,22 +85,8 @@ var $ = (function () {
 				elements = context.getElementsByClassName(classes);
 		  else if (tag)
 				elements = context.getElementsByTagName(tag);		
-			}
 		}
-		
-		if (queryElements.length === 0)
-			return elements;
-			
-		var matched = [];
-		var newPattern = queryElements.join(' ');
-		for (var i = 0; i < elements.length; i++) {
-			var newElems = getElementsFromPattern(newPattern, elements[i]);
-			for (var j = 0; j < newElems.length; j++) {
-				matched.push(newElems[j]);
-			}
-			matched = removeDuplicate(matched);
-		}
-		return matched;
+		return elements;
 	}
 
 	function removeDuplicate(array) {

@@ -52,8 +52,10 @@ Game.prototype._nextFrame = function() {
 
 		this.check();
 
-		this._player.move();
+		this._world._turbulenceManager.setRandomValues();
 
+		this._player.move();
+		
 		this._board.clear();
 		this._world.drawLayers();
 		this._world.drawObjects();

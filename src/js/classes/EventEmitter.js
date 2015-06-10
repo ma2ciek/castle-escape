@@ -1,8 +1,8 @@
-function EventEmitter () {
+function EventEmitter() {
 	this._events = {};
 }
 
-EventEmitter.prototype._addEventListener = function(eventType, eventHandler) {
+EventEmitter.prototype._addEventListener = function (eventType, eventHandler) {
 	if (!this._events[eventType])
 		this._events[eventType] = [];
 	if (typeof eventHandler !== 'function')
@@ -10,7 +10,7 @@ EventEmitter.prototype._addEventListener = function(eventType, eventHandler) {
 	this._events[eventType].push(eventHandler.bind(this));
 };
 
-EventEmitter.prototype._trigger = function(eventType) {
+EventEmitter.prototype._trigger = function (eventType) {
 	var events = this._events[eventType]
 	if (!events)
 		return;
@@ -21,7 +21,7 @@ EventEmitter.prototype._trigger = function(eventType) {
 	// this._events[eventType].length = 0;
 };
 
-EventEmitter.prototype._removeEventListener = function(eventType, eventHandler) {
+EventEmitter.prototype._removeEventListener = function (eventType, eventHandler) {
 	if (typeof this._events[eventType] === 'undefined')
 		return;
 
@@ -33,12 +33,12 @@ EventEmitter.prototype._removeEventListener = function(eventType, eventHandler) 
 	return this;
 };
 
-EventEmitter.prototype._dispatch = function(eventType) {
-	if(eventType in this._events)
+EventEmitter.prototype._dispatch = function (eventType) {
+	if (eventType in this._events)
 		this._events[eventType].length = 0;
 };
 
-EventEmitter.prototype._getEventListeners = function(eventType) {
+EventEmitter.prototype._getEventListeners = function (eventType) {
 	return this._events[eventType];
 }
 
@@ -46,28 +46,28 @@ EventEmitter.prototype._getEventListeners = function(eventType) {
 
 function Timeline() {
 	this._timeEvents = {};
-    this._frame = 0;
+	this._frame = 0;
 }
-Timeline.prototype.getCurrentFrameIndex = function() {
+Timeline.prototype.getCurrentFrameIndex = function () {
 	return this._frame;
 }
-Timeline.prototype.addEvent = function(_frame, eventCallback, self) {
+Timeline.prototype.addEvent = function (_frame, eventCallback, self) {
 	_frame += this._frame;
-    if (!this._timeEvents[_frame]) this._timeEvents[_frame] = [];
-    this._timeEvents[_frame].push(eventCallback.bind(self));
+	if (!this._timeEvents[_frame]) this._timeEvents[_frame] = [];
+	this._timeEvents[_frame].push(eventCallback.bind(self));
 };
-Timeline.prototype.showEvents = function() {
+Timeline.prototype.showEvents = function () {
 	return this._timeEvents;
 }
 Timeline.prototype.check = function () {
-    var events = this._timeEvents[this._frame]; // frame events
-    if (events) {
-        for (var i = 0; i < events.length; i++) {
-            events[i].call(this);
-        }
-        delete this._timeEvents[this._frame];
-    }
+	var events = this._timeEvents[this._frame]; // frame events
+	if (events) {
+		for (var i = 0; i < events.length; i++) {
+			events[i].call(this);
+		}
+		delete this._timeEvents[this._frame];
+	}
 };
-Timeline.prototype.getFrameIndex = function() {
+Timeline.prototype.getFrameIndex = function () {
 	return this._frame;
 }

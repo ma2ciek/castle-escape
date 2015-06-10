@@ -7,7 +7,7 @@ function World(game) {
 	this._objectsOnScreen = [];
 	this._objectTypes = [];
 	this._loadData();
-	this._turbulenceManager = new TurbulencesManager();
+	this._turbulenceManager = new TurbulenceManager();
 	extend(this, new EventEmitter());
 }
 

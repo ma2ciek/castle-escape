@@ -1201,32 +1201,81 @@ var $ = (function () {
 			if (creatingNewSelector.test(query)) {
 				var temp = document.createElement('template');
 				temp.innerHTML = query;
-				throw new Error(temp.content)
-				elements = temp.children || temp.content.children;
+				elements = temp.content.children;
 			}
 
 			else
-				elements = getElementFromPattern(query);
+				elements = getElementsFromPattern(document, query);
 		}
 
 		return new DocumentObjectsManager(elements);
 	}
 
-	function getElementFromPattern(pattern) {
-		var arr = pattern.split(' ');
-		for (var i = 0; i < arr.length; i++) {
-			var el = arr[i];
+	function getElementsFromPattern(context, pattern) {
+		var queryElements = pattern.split(' ');
+		var queryEl = queryElements.shift();
+		if (!queryEl)
+			return [];
 
-			var id = getId(el);
-			if(id)
-				return [document.getElementById(id)];
-
-			var classes = getClasses(el);
-			if(classes)
-				return document.getElementsByClassName(classes);
-
-			return document.getElementsByTagName(el);
+		var elements = getElementsByClassesTagsAndIds(context, queryEl);
+		
+		if (queryElements.length === 0)
+			return elements;
+		
+		var newPattern = queryElements.join(' ');
+		return getMatchedChildren(newPattern, elements);
+	}
+	
+	function getMatchedChildren(pattern, elements) {
+		var matched = [];
+		
+		for (var i = 0; i < elements.length; i++) {
+			var newElems = getElementsFromPattern(elements[i], pattern);
+			for (var j = 0; j < newElems.length; j++) {
+				matched.push(newElems[j]);
+			}
+			matched = removeDuplicate(matched);
 		}
+		return matched;
+	}
+
+	function getElementsByClassesTagsAndIds(context, queryEl) {
+		var elements = [];
+		var id = getId(queryEl);
+		if (id) {
+			var el = document.getElementById(id);
+			el && elements.push(el);
+		} else {
+			var classes = getClasses(queryEl);
+			var tag = getTag(queryEl);
+			
+			if(classes && tag) {
+				var classElements = context.getElementsByClassName(classes);
+				var tagElements = context.getElementsByTagName(tag);
+				
+				tagElements.filter(function(n) {
+				    return classElements.indexOf(n) !== -1;
+				});
+			} else if (classes)
+				elements = context.getElementsByClassName(classes);
+		  else if (tag)
+				elements = context.getElementsByTagName(tag);		
+		}
+		return elements;
+	}
+
+	function removeDuplicate(array) {
+		// TODO: speed up this fn
+		return array.filter(function (item, pos) {
+			return array.indexOf(item) === pos;
+		});
+	}
+
+	function getTag(el) {
+		var tagPattern = /^[a-z]\w+/;
+		var match = el.match(tagPattern);
+		if (match)
+			return match[0];
 	}
 
 	function getId(el) {
@@ -1353,22 +1402,22 @@ _p.eq = function (index) {
 }
 
 _p.attr = function (attrName, value) {
-	if(value) {
+	if (value) {
 		this._each(function (el) {
 			el.setAttribute(attrName, value);
 		});
 		return this;
 	}
-	else 
+	else
 		return this._elements[0].getAttribute(attrName);
 }
 
 //#### src/js/classes/EventEmitter.js
-function EventEmitter () {
+function EventEmitter() {
 	this._events = {};
 }
 
-EventEmitter.prototype._addEventListener = function(eventType, eventHandler) {
+EventEmitter.prototype._addEventListener = function (eventType, eventHandler) {
 	if (!this._events[eventType])
 		this._events[eventType] = [];
 	if (typeof eventHandler !== 'function')
@@ -1376,7 +1425,7 @@ EventEmitter.prototype._addEventListener = function(eventType, eventHandler) {
 	this._events[eventType].push(eventHandler.bind(this));
 };
 
-EventEmitter.prototype._trigger = function(eventType) {
+EventEmitter.prototype._trigger = function (eventType) {
 	var events = this._events[eventType]
 	if (!events)
 		return;
@@ -1387,7 +1436,7 @@ EventEmitter.prototype._trigger = function(eventType) {
 	// this._events[eventType].length = 0;
 };
 
-EventEmitter.prototype._removeEventListener = function(eventType, eventHandler) {
+EventEmitter.prototype._removeEventListener = function (eventType, eventHandler) {
 	if (typeof this._events[eventType] === 'undefined')
 		return;
 
@@ -1399,12 +1448,12 @@ EventEmitter.prototype._removeEventListener = function(eventType, eventHandler) 
 	return this;
 };
 
-EventEmitter.prototype._dispatch = function(eventType) {
-	if(eventType in this._events)
+EventEmitter.prototype._dispatch = function (eventType) {
+	if (eventType in this._events)
 		this._events[eventType].length = 0;
 };
 
-EventEmitter.prototype._getEventListeners = function(eventType) {
+EventEmitter.prototype._getEventListeners = function (eventType) {
 	return this._events[eventType];
 }
 
@@ -1412,29 +1461,29 @@ EventEmitter.prototype._getEventListeners = function(eventType) {
 
 function Timeline() {
 	this._timeEvents = {};
-    this._frame = 0;
+	this._frame = 0;
 }
-Timeline.prototype.getCurrentFrameIndex = function() {
+Timeline.prototype.getCurrentFrameIndex = function () {
 	return this._frame;
 }
-Timeline.prototype.addEvent = function(_frame, eventCallback, self) {
+Timeline.prototype.addEvent = function (_frame, eventCallback, self) {
 	_frame += this._frame;
-    if (!this._timeEvents[_frame]) this._timeEvents[_frame] = [];
-    this._timeEvents[_frame].push(eventCallback.bind(self));
+	if (!this._timeEvents[_frame]) this._timeEvents[_frame] = [];
+	this._timeEvents[_frame].push(eventCallback.bind(self));
 };
-Timeline.prototype.showEvents = function() {
+Timeline.prototype.showEvents = function () {
 	return this._timeEvents;
 }
 Timeline.prototype.check = function () {
-    var events = this._timeEvents[this._frame]; // frame events
-    if (events) {
-        for (var i = 0; i < events.length; i++) {
-            events[i].call(this);
-        }
-        delete this._timeEvents[this._frame];
-    }
+	var events = this._timeEvents[this._frame]; // frame events
+	if (events) {
+		for (var i = 0; i < events.length; i++) {
+			events[i].call(this);
+		}
+		delete this._timeEvents[this._frame];
+	}
 };
-Timeline.prototype.getFrameIndex = function() {
+Timeline.prototype.getFrameIndex = function () {
 	return this._frame;
 }
 
@@ -1493,8 +1542,10 @@ Game.prototype._nextFrame = function() {
 
 		this.check();
 
-		this._player.move();
+		this._world._turbulenceManager.setRandomValues();
 
+		this._player.move();
+		
 		this._board.clear();
 		this._world.drawLayers();
 		this._world.drawObjects();
@@ -1579,7 +1630,8 @@ function GameObject(_world, properties) {
 GameObject.prototype.draw = function() {
 	var animation = this.animations[this.currentAnimationName];
 	
-	var relPos = relativate(this.x, this.y);
+	// Do poprawy
+	var relPos = game._world.relativate(this.x, this.y);
 	
 	var frame = animation.getCurrentFrame();
 	
@@ -2242,6 +2294,81 @@ var styles = {
 	},
 };
 
+//#### src/js/classes/ScreenTurbulence.js
+function TurbulenceManager(maxScreenDelta) {
+	this._turbulences = [];
+	this._maxScreenDelta = maxScreenDelta;
+}
+
+var _p = TurbulenceManager.prototype;
+
+_p.getDelta = function () {
+	var x = 0;
+	var y = 0;
+	for (var i = 0; i < this._turbulences.length; i++) {
+		x += this._turbulences[i].getX();
+		y += this._turbulences[i].getY();
+	}
+	if (Math.abs(x) > this._maxScreenDelta)
+		x = x / Math.abs(x) * this._maxScreenDelta;
+
+	if (Math.abs(y) > this._maxScreenDelta)
+		y = y / Math.abs(y) * this._maxScreenDelta;
+
+	return {
+		x: x,
+		y: y
+	}
+};
+
+_p.setRandomValues = function () {
+	for (var i = 0; i < this._turbulences.length; i++) {
+		this._turbulences[i].setRandomValues();
+	}
+};
+
+_p.add = function (time, altitude) {
+	var t = new Turbulence(time, altitude);
+	this._turbulences.push(t);
+	this._setExpiredEventListener(t);
+};
+
+_p._setExpiredEventListener = function (t) {
+	var self = this;
+	t._addEventListener('expired', function () {
+		var index = self._turbulences.indexOf(this);
+		self._turbulences.splice(index, 1);
+	}.bind(this));
+};
+
+function Turbulence(time, altitude) {
+	extend(this, new EventEmitter());
+	this._timeLeft = time;
+	this._altitude = altitude;
+	this._x = 0;
+	this._y = 0;
+	this.setRandomValues();
+}
+
+_p = Turbulence.prototype;
+
+_p.setRandomValues = function () {
+	this._timeLeft--;
+	if (this._timeLeft <= 0)
+		this._trigger('expired');
+		
+	this._x = (2 * Math.random() - 1) * this._altitude;
+	this._y = (2 * Math.random() - 1) * this._altitude;
+};
+
+_p.getX = function () {
+	return this._x;
+};
+
+_p.getY = function () {
+	return this._y;
+};
+
 //#### src/js/classes/Settings.js
 function Settings() {
 	extend(this, new EventEmitter());
@@ -2529,6 +2656,7 @@ function World(game) {
 	this._objectsOnScreen = [];
 	this._objectTypes = [];
 	this._loadData();
+	this._turbulenceManager = new TurbulenceManager();
 	extend(this, new EventEmitter());
 }
 
@@ -2580,7 +2708,7 @@ World.prototype.drawLayers = function() {
 			for (var y = mapEdges.startY; y < mapEdges.endY; y++) {
 				for (var x = mapEdges.endX - 1; x >= mapEdges.startX; x--) {
 
-					var relPosition = relativate(x * this.outputTileWidth, y * this.outputTileHeight);
+					var relPosition = this.relativate(x * this.outputTileWidth, y * this.outputTileHeight);
 					var screenX = relPosition.x;
 					var screenY = relPosition.y;
 
@@ -2657,6 +2785,14 @@ World.prototype.addObject = function(o) {
 	this._objects.push(o);
 };
 
+World.prototype.relativate = function (x, y) {
+	var turbulences = this._turbulenceManager.getDelta();
+	return {
+		x: Math.floor(x + turbulences.x - game._player.x - game._player.width / 2 + game._board.width / 2),
+		y: Math.floor(y + turbulences.y - game._player.y - game._player.height / 2 + game._board.height / 2)
+	};
+};
+
 
 
 /***** TILESET CLASS *****/
@@ -2692,10 +2828,3 @@ TileSet.prototype.draw = function(screenX, screenY, index) {
 		screenX, screenY, this.tilewidth, this.tileheight
 	);
 };
-
-function relativate(x, y) {
-	return {
-		x: Math.floor(x - game._player.x - game._player.width / 2 + game._board.width / 2),
-		y: Math.floor(y - game._player.y - game._player.width / 2 + game._board.height / 2)
-	};
-} 
