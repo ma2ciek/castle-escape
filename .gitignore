@@ -1,5 +1,8 @@
-node_modules/
 .settings/
 dev/
 bin/
 prod/
+
+# NODE FILES
+node_modules/
+*.log
