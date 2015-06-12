@@ -46,8 +46,9 @@ Game.prototype.resume = function() {
 
 
 Game.prototype._nextFrame = function() {
-
+	/* global performance */
 	try {
+		var t1 = performance.now();
 		this._frame++;
 
 		this.check();
@@ -57,12 +58,20 @@ Game.prototype._nextFrame = function() {
 		this._player.move();
 		
 		this._board.clear();
+		
+		
+		
 		this._world.drawLayers();
+		
+		
+		
 		this._world.drawObjects();
 
 		this._board.drawScenes();
-
-		fps.count(ctx);
+		var t2 = performance.now();
+		$('#performance').html(t2-t1 | 0);
+		//fps.count(ctx);
+		//$('#performance2').html(t2-t1 | 0);
 
 		if (!this._pause)
 			window.requestAnimationFrame(this._nextFrame.bind(this));

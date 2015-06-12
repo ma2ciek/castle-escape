@@ -19,7 +19,7 @@ var $ = (function () {
 		else {
 			var query = arguments[0];
 
-			console.log(query);
+			// console.log(query);
 
 			var creatingNewSelector = /<*>/;
 

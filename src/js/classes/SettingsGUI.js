@@ -134,9 +134,10 @@ _p._addBindingsEventListeners = function () {
 		if (div) {
 			self._assignments.tryBind(e.keyCode);
 			e.preventDefault();
+			e.stopPropagation();
 		} else if (user.actions.Settings) {
 			removeEventListeners();
-			this.removeSettings();
+			self.removeSettings();
 		}
 	}
 

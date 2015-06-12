@@ -135,7 +135,7 @@ _p._setEventListeners = function (o, objName) {
 
 	this._onClick = o.onClick && o.onClick.bind(this) || null;
 
-	if (objName + 'Hover' in styles || o.onHover || o.onBlur) {
+	if (objName + 'Hover' in styles || o.onHover || o.onMouseOut) {
 
 		this._setHoverStyle(objName + 'Hover');
 
@@ -145,8 +145,8 @@ _p._setEventListeners = function (o, objName) {
 			self._scene._trigger('dirt');
 		};
 
-		this._onBlur = function () {
-			o.onBlur && o.onBlur.call(self);
+		this._onMouseOut = function () {
+			o.onMouseOut && o.onMouseOut.call(self);
 			self._hover = false;
 			self._scene._trigger('dirt');
 		};
@@ -225,7 +225,7 @@ _p._createActiveObjectFromSelf = function () {
 		zIndex: this._zIndex,
 		leftClick: this._onClick,
 		onHover: this._onHover,
-		onBlur: this._onBlur,
+		onMouseOut: this._onMouseOut,
 		fromCenter: false
 	});
 };
@@ -287,16 +287,16 @@ var styles = {
 
 	// Main Page
 	tile: {
-		width: 160,
-		height: 100,
+		width: 140,
+		height: 80,
 		alignCenter: true,
-		top: 430 - 160,
+		top: 280,
 		color: '#6bf',
 		textAlign: 'center',
 		fontSize: '20px',
 		textBaseline: 'middle',
-		textFromTop: 100 / 2,
-		textFromLeft: 160 / 2,
+		textFromTop: 80 / 2,
+		textFromLeft: 140 / 2,
 		zIndex: 2,
 		cornerRadius: 30,
 	},

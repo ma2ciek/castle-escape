@@ -315,10 +315,20 @@ function RectCollision(o1, o2) {
 Date.now = Date.now || function () {
     return +new Date();
 };
-Math.sign = Math.sign || function(x) {
+
+Math.sign = Math.sign || function (x) {
     return x === 0 ? 0 : x / Math.abs(x);
 };
-Array.prototype.includes = Array.prototype.includes || function(x) {
+
+Array.prototype.indexOf = Array.prototype.indexOf || function (x) {
+    for (var i = 0; i < this.length; i++) {
+        if (this[i] === x)
+            return i;
+    }
+    return -1;
+};
+
+Array.prototype.includes = Array.prototype.includes || function (x) {
     return this.indexOf(x) !== -1;
 };
 
@@ -1201,7 +1211,7 @@ var $ = (function () {
 		else {
 			var query = arguments[0];
 
-			console.log(query);
+			// console.log(query);
 
 			var creatingNewSelector = /<*>/;
 
@@ -1543,8 +1553,9 @@ Game.prototype.resume = function() {
 
 
 Game.prototype._nextFrame = function() {
-
+	/* global performance */
 	try {
+		var t1 = performance.now();
 		this._frame++;
 
 		this.check();
@@ -1554,12 +1565,20 @@ Game.prototype._nextFrame = function() {
 		this._player.move();
 		
 		this._board.clear();
+		
+		
+		
 		this._world.drawLayers();
+		
+		
+		
 		this._world.drawObjects();
 
 		this._board.drawScenes();
-
-		fps.count(ctx);
+		var t2 = performance.now();
+		$('#performance').html(t2-t1 | 0);
+		//fps.count(ctx);
+		//$('#performance2').html(t2-t1 | 0);
 
 		if (!this._pause)
 			window.requestAnimationFrame(this._nextFrame.bind(this));
@@ -2031,7 +2050,7 @@ _p._setEventListeners = function (o, objName) {
 
 	this._onClick = o.onClick && o.onClick.bind(this) || null;
 
-	if (objName + 'Hover' in styles || o.onHover || o.onBlur) {
+	if (objName + 'Hover' in styles || o.onHover || o.onMouseOut) {
 
 		this._setHoverStyle(objName + 'Hover');
 
@@ -2041,8 +2060,8 @@ _p._setEventListeners = function (o, objName) {
 			self._scene._trigger('dirt');
 		};
 
-		this._onBlur = function () {
-			o.onBlur && o.onBlur.call(self);
+		this._onMouseOut = function () {
+			o.onMouseOut && o.onMouseOut.call(self);
 			self._hover = false;
 			self._scene._trigger('dirt');
 		};
@@ -2121,7 +2140,7 @@ _p._createActiveObjectFromSelf = function () {
 		zIndex: this._zIndex,
 		leftClick: this._onClick,
 		onHover: this._onHover,
-		onBlur: this._onBlur,
+		onMouseOut: this._onMouseOut,
 		fromCenter: false
 	});
 };
@@ -2183,16 +2202,16 @@ var styles = {
 
 	// Main Page
 	tile: {
-		width: 160,
-		height: 100,
+		width: 140,
+		height: 80,
 		alignCenter: true,
-		top: 430 - 160,
+		top: 280,
 		color: '#6bf',
 		textAlign: 'center',
 		fontSize: '20px',
 		textBaseline: 'middle',
-		textFromTop: 100 / 2,
-		textFromLeft: 160 / 2,
+		textFromTop: 80 / 2,
+		textFromLeft: 140 / 2,
 		zIndex: 2,
 		cornerRadius: 30,
 	},
@@ -2605,9 +2624,10 @@ _p._addBindingsEventListeners = function () {
 		if (div) {
 			self._assignments.tryBind(e.keyCode);
 			e.preventDefault();
+			e.stopPropagation();
 		} else if (user.actions.Settings) {
 			removeEventListeners();
-			this.removeSettings();
+			self.removeSettings();
 		}
 	}
 
@@ -2713,12 +2733,12 @@ World.prototype._createMapFromImportedData = function(layers) {
 World.prototype.drawLayers = function() {
 
 	var mapEdges = this._calculateMapEdges();
-
+	
 	for (var i = 0; i < this._layers.length; i++) {
 		var l = this._layers[i];
 		if (l.data) {
 			for (var y = mapEdges.startY; y < mapEdges.endY; y++) {
-				for (var x = mapEdges.endX - 1; x >= mapEdges.startX; x--) {
+				for (var x = mapEdges.startX; x < mapEdges.endX; x++) {
 
 					var relPosition = this.relativate(x * this.outputTileWidth, y * this.outputTileHeight);
 					var screenX = relPosition.x;
@@ -2833,9 +2853,15 @@ TileSet.prototype.load = function() {
 TileSet.prototype.draw = function(screenX, screenY, index) {
 	index -= this.firstgid;
 
+	if(index < 0) {
+		// console.error('index < 0');
+		index = 0;
+	}
+	
 	var left = (index % this.cols) * this.tilewidth;
 	var top = (index / this.cols | 0) * this.tileheight;
 
+	
 	ctx.drawImage(this.img, left, top, this.tilewidth, this.tileheight,
 		screenX, screenY, this.tilewidth, this.tileheight
 	);

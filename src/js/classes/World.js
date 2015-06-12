@@ -52,12 +52,12 @@ World.prototype._createMapFromImportedData = function(layers) {
 World.prototype.drawLayers = function() {
 
 	var mapEdges = this._calculateMapEdges();
-
+	
 	for (var i = 0; i < this._layers.length; i++) {
 		var l = this._layers[i];
 		if (l.data) {
 			for (var y = mapEdges.startY; y < mapEdges.endY; y++) {
-				for (var x = mapEdges.endX - 1; x >= mapEdges.startX; x--) {
+				for (var x = mapEdges.startX; x < mapEdges.endX; x++) {
 
 					var relPosition = this.relativate(x * this.outputTileWidth, y * this.outputTileHeight);
 					var screenX = relPosition.x;
@@ -172,9 +172,15 @@ TileSet.prototype.load = function() {
 TileSet.prototype.draw = function(screenX, screenY, index) {
 	index -= this.firstgid;
 
+	if(index < 0) {
+		// console.error('index < 0');
+		index = 0;
+	}
+	
 	var left = (index % this.cols) * this.tilewidth;
 	var top = (index / this.cols | 0) * this.tileheight;
 
+	
 	ctx.drawImage(this.img, left, top, this.tilewidth, this.tileheight,
 		screenX, screenY, this.tilewidth, this.tileheight
 	);
