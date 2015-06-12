@@ -88,7 +88,7 @@ module.exports = function (grunt) {
                         dest: 'prod/style',
                         expand: true
                     }, {
-                        cwd: 'src/bin/html',
+                        cwd: 'src',
                         src: 'index.html',
                         dest: 'prod',
                         expand: true
@@ -129,7 +129,7 @@ module.exports = function (grunt) {
                         },
                         expand: true
                     }, {
-                        cwd: 'src/bin/html',
+                        cwd: 'src',
                         src: 'index.html',
                         dest: 'dev',
                         expand: true
